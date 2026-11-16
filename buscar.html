@@ -139,7 +139,41 @@
         if (typeof item.imageUrl === 'string' && /^https:\/\//i.test(item.imageUrl)) {
           const imgLink=document.createElement('a');imgLink.href=item.imageUrl;imgLink.target='_blank';imgLink.rel='noopener noreferrer';imgLink.textContent='Abrir imagem';buttons.appendChild(imgLink);
         }
-        content.appendChild(buttons);article.appendChild(content);return article;
+        
+const preco = Number(String(item.priceMin ?? '').replace(',', '.'));
+
+if (item.priceMin != null && Number.isFinite(preco)) {
+  const valor = document.createElement('strong');
+  valor.textContent = 'Preço a partir de: ' +
+    preco.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    });
+  content.insertBefore(valor, pct);
+}
+
+if (typeof item.offerLink === 'string') {
+  try {
+    const url = new URL(item.offerLink);
+    if (
+      url.protocol === 'https:' &&
+      (url.hostname === 'shopee.com.br' ||
+       url.hostname.endsWith('.shopee.com.br'))
+    ) {
+      const link = document.createElement('a');
+      link.href = url.href;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = 'Abrir oferta';
+      buttons.appendChild(link);
+    }
+  } catch {}
+}
+
+content.appendChild(buttons);
+article.appendChild(content);
+return article;
+
       }
       $('searchForm').addEventListener('submit',async(event)=>{
         event.preventDefault();
