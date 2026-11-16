@@ -155,11 +155,16 @@ if (item.priceMin != null && Number.isFinite(preco)) {
 if (typeof item.offerLink === 'string') {
   try {
     const url = new URL(item.offerLink);
-    if (
-      url.protocol === 'https:' &&
-      (url.hostname === 'shopee.com.br' ||
-       url.hostname.endsWith('.shopee.com.br'))
-    ) {
+   
+if (
+  url.protocol === 'https:' &&
+  (
+    url.hostname === 'shopee.com.br' ||
+    url.hostname.endsWith('.shopee.com.br') ||
+    url.hostname === 's.shopee.com.br'
+  )
+) {
+
       const link = document.createElement('a');
       link.href = url.href;
       link.target = '_blank';
