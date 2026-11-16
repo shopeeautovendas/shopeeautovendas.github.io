@@ -166,6 +166,22 @@ if (typeof item.offerLink === 'string') {
       link.rel = 'noopener noreferrer';
       link.textContent = 'Abrir oferta';
       buttons.appendChild(link);
+      
+const copiarLink = document.createElement('button');
+copiarLink.type = 'button';
+copiarLink.textContent = '🔗 Copiar link';
+
+copiarLink.addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(url.href);
+    setStatus('Link da oferta copiado!', 'ok');
+  } catch {
+    setStatus('Não foi possível copiar o link.', 'error');
+  }
+});
+
+buttons.appendChild(copiarLink);
+
     }
   } catch {}
 }
