@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Buscador pessoal de ofertas da Shopee, integrado ao Shopee AutoVendas.">
+  <title>Buscar ofertas | Shopee AutoVendas</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color-scheme: light; --orange:#ed502e; --dark:#26242b; --sub:#696874; --line:#eeded7; --bg:#fff8f4; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--dark); line-height:1.45; }
+    header { background:linear-gradient(110deg,#e7492a,#fa8352); color:white; padding:28px 20px; }
+    .head,main { max-width:1100px; margin:auto; }
+    .head { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+    h1 { font-size:clamp(1.5rem,4vw,2rem); margin:0; }
+    header p { margin:6px 0 0; opacity:.95; }
+    .head a { color:#fff; border:1px solid #ffffff90; border-radius:9px; padding:9px 13px; text-decoration:none; font-weight:600; }
+    .head a:hover { background:#ffffff20; }
+    main { padding:24px 18px 55px; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:16px; padding:20px; box-shadow:0 4px 16px #59311a0b; margin-bottom:16px; }
+    h2 { font-size:1.12rem; margin:0 0 12px; }
+    label { display:block; font-size:.89rem; font-weight:650; margin:0 0 6px; }
+    input,select { width:100%; padding:11px 12px; border-radius:10px; border:1px solid #d1c6c1; font:inherit; color:var(--dark); background:#fff; }
+    input:focus,select:focus { outline:2px solid #ed502e80; outline-offset:1px; }
+    input[type="password"] { font-family:inherit; }
+    button { background:#fff; border:1px solid #d8c8c0; border-radius:10px; padding:11px 15px; font:inherit; font-weight:700; cursor:pointer; }
+    button.primary { background:var(--orange); border-color:var(--orange); color:#fff; }
+    button:disabled { opacity:.55; cursor:wait; }
+    .row { display:grid; grid-template-columns:2fr 1fr 1fr; gap:12px; align-items:end; }
+    .key-row { display:flex; align-items:end; gap:12px; flex-wrap:wrap; }
+    .key-row > div { flex:1 1 260px; }
+    .actions { display:flex; gap:9px; flex-wrap:wrap; margin-top:14px; }
+    .hint { font-size:.84rem; color:var(--sub); margin:9px 0 0; }
+    .notice { background:#fff1e7; border-left:3px solid var(--orange); border-radius:0 9px 9px 0; padding:12px 13px; font-size:.9rem; }
+    #status { display:none; padding:12px 14px; border-radius:12px; margin:16px 0; white-space:pre-wrap; }
+    #status.ok { display:block; background:#e8f6ec; border:1px solid #b7ddc3; color:#225a39; }
+    #status.info { display:block; background:#fff1df; border:1px solid #efd7a7; color:#7a5014; }
+    #status.error { display:block; background:#fff0ed; border:1px solid #ecc4bd; color:#8e332c; }
+    .result-head { display:flex; flex-wrap:wrap; justify-content:space-between; gap:9px; align-items:center; margin:0 0 12px; }
+    .result-head h2 { margin:0; }
+    .products { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+    .item { background:white; border:1px solid var(--line); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; }
+    .photo { aspect-ratio:1.2; display:grid; place-items:center; overflow:hidden; background:#f6f3f1; }
+    .photo img { width:100%; height:100%; object-fit:contain; }
+    .photo .fallback { color:#82766f; font-size:.85rem; padding:20px; }
+    .content { padding:14px; display:flex; flex-direction:column; gap:8px; flex:1; }
+    .name { margin:0; font-weight:750; overflow-wrap:anywhere; font-size:.94rem; }
+    .commission { color:#af4a22; background:#fff0e6; font-weight:750; font-size:.83rem; border-radius:8px; padding:5px 8px; align-self:flex-start; }
+    .meta { font-size:.78rem; color:var(--sub); }
+    .buttons { display:flex; flex-wrap:wrap; gap:7px; margin-top:auto; }
+    .buttons button, .buttons a { flex:1; min-width:104px; text-align:center; display:inline-flex; justify-content:center; align-items:center; color:var(--dark); background:#fff; border:1px solid #d8c8c0; border-radius:9px; font-size:.82rem; font-weight:650; padding:8px 10px; cursor:pointer; text-decoration:none; }
+    .buttons a:hover,.buttons button:hover { background:#fff4ed; }
+    .empty { padding:30px; border:1px dashed #e5cbc0; border-radius:14px; text-align:center; color:var(--sub); }
+    .bottom { margin-top:18px; color:var(--sub); font-size:.85rem; }
+    footer { padding:16px 0; font-size:.82rem; color:var(--sub); }
+    footer a { color:#ac4229; }
+    @media (max-width:810px) { .products { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media (max-width:600px) { .row { grid-template-columns:1fr; } .products { grid-template-columns:1fr; } .card { padding:16px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="head">
+      <div><h1>🔎 Buscar ofertas na Shopee</h1><p>Shopee AutoVendas • Busca real via Cloudflare</p></div>
+      <a href="index.html">← Voltar ao painel</a>
+    </div>
+  </header>
+  <main>
+    <section class="card">
+      <h2>1. Acesso privado</h2>
+      <div class="key-row">
+        <div><label for="panelKey">Sua PAINEL_CHAVE da Cloudflare</label><input id="panelKey" type="password" autocomplete="off" spellcheck="false" placeholder="Digite sua senha privada" required></div>
+        <button id="toggleKey" type="button" aria-controls="panelKey">Mostrar senha</button>
+      </div>
+      <p class="hint">A chave é usada somente nesta aba para fazer a consulta por HTTPS. Não será salva neste site, no navegador ou no GitHub. Nunca digite aqui o Secret da Shopee.</p>
+    </section>
+    <section class="card">
+      <h2>2. Buscar produtos</h2>
+      <form id="searchForm">
+        <div class="row">
+          <div><label for="keyword">Nome do produto</label><input id="keyword" maxlength="80" minlength="2" value="organizador de cozinha" required placeholder="Ex.: almofada natalina"></div>
+          <div><label for="sortType">Ordenação</label><select id="sortType"><option value="2">Mais vendidos</option><option value="5">Maior comissão</option><option value="4">Menor preço</option><option value="3">Maior preço</option><option value="1">Relevância</option></select></div>
+          <div><label for="limit">Resultados</label><select id="limit"><option value="5">5 produtos</option><option value="10">10 produtos</option><option value="20">20 produtos</option></select></div>
+        </div>
+        <div class="actions"><button id="searchBtn" class="primary" type="submit">🔍 Buscar ofertas</button><button id="clearBtn" type="button">Limpar resultados</button></div>
+      </form>
+      <div id="status" aria-live="polite" role="status"></div>
+      <p class="notice">Essa versão mostra <strong>nome, foto e taxa máxima de comissão</strong>. Preço, avaliações e links serão incluídos após testarmos esses campos no Worker. As taxas não garantem comissão em toda venda.</p>
+    </section>
+    <section class="card">
+      <div class="result-head"><h2>Resultados da Shopee</h2><span id="count" class="meta">Nenhuma busca realizada</span></div>
+      <div id="products" class="products"><div class="empty" style="grid-column:1/-1">Digite o produto e clique em “Buscar ofertas”.</div></div>
+      <p id="pageInfo" class="bottom"></p>
+    </section>
+    <footer>Ferramenta pessoal independente • Não é um aplicativo oficial da Shopee • <a href="privacidade.html">Política de Privacidade</a></footer>
+  </main>
+  <script>
+    (() => {
+      'use strict';
+      const ENDPOINT = 'https://shopee-autovendas-api.gabrielalemosdahora.workers.dev/search';
+      const $ = id => document.getElementById(id);
+      const products = $('products');
+      const status = $('status');
+      const setStatus = (message, type='info') => { status.textContent = message; status.className = type; };
+      const clearStatus = () => { status.textContent=''; status.className=''; };
+      const blank = message => { products.replaceChildren(); const d = document.createElement('div'); d.className='empty'; d.style.gridColumn='1/-1'; d.textContent=message; products.appendChild(d); };
+      const rate = value => {
+        if (value === null || value === undefined || value === '') return 'Comissão não informada';
+        const n = Number(String(value).replace(',', '.'));
+        if (!Number.isFinite(n)) return 'Comissão não informada';
+        return 'Comissão máxima: '+new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2}).format(n*100)+'%';
+      };
+      $('toggleKey').addEventListener('click', () => {
+        const el = $('panelKey'); const visible=el.type==='text';
+        el.type = visible ? 'password' : 'text';
+        $('toggleKey').textContent=visible?'Mostrar senha':'Ocultar senha';
+      });
+      $('clearBtn').addEventListener('click', () => {
+        clearStatus(); blank('Nenhuma busca realizada.'); $('count').textContent='Nenhuma busca realizada'; $('pageInfo').textContent='';
+      });
+      function card(item) {
+        const article = document.createElement('article'); article.className='item';
+        const photo = document.createElement('div'); photo.className='photo';
+        if (typeof item.imageUrl === 'string' && /^https:\/\//i.test(item.imageUrl)) {
+          const img=document.createElement('img'); img.src=item.imageUrl; img.alt=String(item.productName||'Foto do produto'); img.loading='lazy'; img.referrerPolicy='no-referrer';
+          img.addEventListener('error', () => { photo.textContent='Imagem indisponível'; photo.className='photo fallback'; });
+          photo.appendChild(img);
+        } else { photo.textContent='Imagem indisponível'; photo.className='photo fallback'; }
+        article.appendChild(photo);
+        const content=document.createElement('div'); content.className='content';
+        const name=document.createElement('p');name.className='name'; name.textContent=String(item.productName||'Produto sem nome'); content.appendChild(name);
+        const pct=document.createElement('div');pct.className='commission';pct.textContent=rate(item.commissionRate);content.appendChild(pct);
+        const id=document.createElement('span');id.className='meta';id.textContent='ID do produto: '+String(item.itemId??'não informado');content.appendChild(id);
+        const buttons=document.createElement('div');buttons.className='buttons';
+        const copy=document.createElement('button');copy.type='button';copy.textContent='Copiar nome';copy.addEventListener('click',async()=>{
+          try { await navigator.clipboard.writeText(String(item.productName||'')); setStatus('Nome do produto copiado!', 'ok'); }
+          catch {setStatus('Não foi possível copiar automaticamente.','error');}
+        });buttons.appendChild(copy);
+        if (typeof item.imageUrl === 'string' && /^https:\/\//i.test(item.imageUrl)) {
+          const imgLink=document.createElement('a');imgLink.href=item.imageUrl;imgLink.target='_blank';imgLink.rel='noopener noreferrer';imgLink.textContent='Abrir imagem';buttons.appendChild(imgLink);
+        }
+        content.appendChild(buttons);article.appendChild(content);return article;
+      }
+      $('searchForm').addEventListener('submit',async(event)=>{
+        event.preventDefault();
+        const keyword=$('keyword').value.trim();const key=$('panelKey').value;
+        if (!key) {setStatus('Digite sua PAINEL_CHAVE para continuar.','error');$('panelKey').focus();return;}
+        if (keyword.length<2) {setStatus('Digite pelo menos 2 letras.','error');return;}
+        $('searchBtn').disabled=true;setStatus('Consultando a Shopee...');
+        try {
+          const response=await fetch(ENDPOINT,{
+            method:'POST',
+            headers:{'Content-Type':'application/json','X-Painel-Chave':key},
+            body:JSON.stringify({keyword,sortType:Number($('sortType').value),page:1,limit:Number($('limit').value)}),
+            cache:'no-store'
+          });
+          let result;try{result=await response.json();}catch{throw new Error('O servidor devolveu uma resposta inválida.');}
+          if (!response.ok) {
+            let details=Array.isArray(result?.detalhes)?result.detalhes.map(d=>(d.codigo ? 'Código '+d.codigo+': ':'')+(d.mensagem||'')).join(' | '):'';
+            if (response.status===401) details='Confira a PAINEL_CHAVE digitada.';
+            if (response.status===503) details='Faltam segredos configurados no Worker.';
+            throw new Error([result?.erro||'Falha na consulta',details].filter(Boolean).join(' — '));
+          }
+          if (!Array.isArray(result.produtos)) throw new Error('A resposta não contém uma lista de produtos.');
+          products.replaceChildren();
+          if (!result.produtos.length) blank('Nenhum produto encontrado para essa busca.');
+          else result.produtos.forEach(item=>products.appendChild(card(item)));
+          $('count').textContent=result.produtos.length+' produto(s) retornado(s)';
+          $('pageInfo').textContent=result.pagina?.hasNextPage?'Há mais resultados na Shopee. Nesta versão mostramos apenas a primeira página.':'';
+          setStatus(result.produtos.length?'Busca realizada com sucesso!':'Busca concluída, mas nenhum produto foi encontrado.','ok');
+        }catch(error){setStatus('Não foi possível buscar: '+error.message,'error');}
+        finally{$('searchBtn').disabled=false;}
+      });
+    })();
+  </script>
+</body>
+</html>
