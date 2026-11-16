@@ -1,0 +1,310 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agenda Pinterest | Shopee AutoVendas</title>
+<style>
+* { box-sizing:border-box }
+body {
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#fff7f3;
+  color:#29252a;
+}
+header {
+  background:#ee4d2d;
+  color:white;
+  padding:24px;
+}
+header h1 { margin:0 0 8px }
+header a { color:white }
+main { max-width:900px;margin:auto;padding:20px }
+section {
+  background:white;
+  border:1px solid #ecd9cf;
+  padding:20px;
+  margin-bottom:18px;
+  border-radius:14px;
+}
+label {
+  display:block;
+  font-weight:bold;
+  margin:12px 0 6px;
+}
+input,select,textarea {
+  width:100%;
+  padding:11px;
+  border:1px solid #d4c8c2;
+  border-radius:8px;
+  font:inherit;
+}
+textarea { min-height:100px;resize:vertical }
+button,.link {
+  padding:11px 14px;
+  border:0;
+  border-radius:8px;
+  background:#ee4d2d;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+  display:inline-block;
+  text-decoration:none;
+  margin:5px 5px 5px 0;
+}
+.secondary { background:#5d5654 }
+.notice {
+  background:#fff2e8;
+  padding:12px;
+  border-radius:8px;
+}
+.item {
+  padding:16px;
+  border:1px solid #eadbd3;
+  border-radius:10px;
+  margin:12px 0;
+  overflow-wrap:anywhere;
+}
+small { color:#625a58 }
+</style>
+</head>
+<body>
+<header>
+<h1>📌 Agenda Pinterest</h1>
+<p>Shopee AutoVendas • Planejamento gratuito</p>
+<a href="index.html">Voltar ao painel</a>
+</header>
+<main>
+<section>
+<h2>📅 Programar um Pin</h2>
+<p class="notice">
+Esta versão organiza seus Pins no navegador.
+Ainda não publica automaticamente no Pinterest.
+</p>
+<form id="form">
+<label>Produto salvo no painel</label>
+<select id="produto" required></select>
+
+<label>Ou nome do produto</label>
+<input id="nome" placeholder="Nome do produto">
+
+<label>Título do Pin</label>
+<input id="titulo" maxlength="100" required>
+
+<label>Descrição / legenda</label>
+<textarea id="descricao" maxlength="500" required></textarea>
+
+<label>Link de afiliada</label>
+<input id="link" type="url" required>
+
+<label>Link da imagem</label>
+<input id="imagem" type="url"
+ placeholder="https://...">
+
+<label>Pasta do Pinterest</label>
+<input id="pasta" required
+ placeholder="Ex.: Achadinhos para Casa">
+
+<label>Data da publicação</label>
+<input id="data" type="date" required>
+
+<label>Horário de Brasília</label>
+<input id="hora" type="time" required>
+
+<button type="submit">📅 Salvar programação</button>
+</form>
+</section>
+
+<section>
+<h2>🗓️ Publicações planejadas</h2>
+<p><small>
+Os horários são de Brasília.
+O navegador precisa manter os dados locais.
+Faça backup para não perder sua agenda.
+</small></p>
+<button id="backup" class="secondary">
+Baixar backup da agenda
+</button>
+<div id="lista"></div>
+</section>
+</main>
+<script>
+const KEY='shopee_agenda_pinterest_v1';
+const PRODUCT_KEY='shopeeautovendas_v1';
+const $=id=>document.getElementById(id);
+
+let agenda=[];
+try {
+  const dados=JSON.parse(localStorage.getItem(KEY)||'[]');
+  agenda=Array.isArray(dados)?dados:[];
+} catch {
+  alert('Agenda local inválida. Confira seu backup.');
+}
+
+let produtos=[];
+try {
+  const dados=JSON.parse(
+    localStorage.getItem(PRODUCT_KEY)||'[]'
+  );
+  produtos=Array.isArray(dados)?dados:[];
+} catch {}
+
+function salvar() {
+  localStorage.setItem(KEY,JSON.stringify(agenda));
+}
+
+function carregarProdutos() {
+  const select=$('produto');
+  select.replaceChildren();
+  select.add(new Option('Selecione ou digite abaixo',''));
+
+  produtos.forEach(p=>{
+    select.add(new Option(p.name||'Produto',p.id));
+  });
+}
+
+$('produto').onchange=()=>{
+  const p=produtos.find(x=>x.id===$('produto').value);
+  if(!p)return;
+  $('nome').value=p.name||'';
+  $('titulo').value=(p.name||'').slice(0,100);
+  $('link').value=p.url||'';
+  $('descricao').value=
+    '✨ Confira este achadinho!\n\n'+
+    (p.name||'')+'\n\n'+
+    (p.benefit||'Confira os detalhes no anúncio.')+
+    '\n\n#Achadinhos #Shopee #Publicidade';
+};
+
+function copiar(texto) {
+  navigator.clipboard.writeText(texto)
+    .then(()=>alert('Copiado!'))
+    .catch(()=>alert('Não foi possível copiar.'));
+}
+
+function renderizar() {
+  const lista=$('lista');
+  lista.replaceChildren();
+
+  const ordenada=[...agenda].sort((a,b)=>
+    (a.data+a.hora).localeCompare(b.data+b.hora)
+  );
+
+  if(!ordenada.length) {
+    lista.textContent='Nenhum Pin programado ainda.';
+    return;
+  }
+
+  ordenada.forEach(p=>{
+    const card=document.createElement('div');
+    card.className='item';
+
+    const titulo=document.createElement('h3');
+    titulo.textContent=p.titulo;
+    card.appendChild(titulo);
+
+    const detalhes=document.createElement('p');
+    detalhes.textContent=
+      '📅 '+p.data.split('-').reverse().join('/')+
+      ' às '+p.hora+' | 📌 '+p.pasta;
+    card.appendChild(detalhes);
+
+    const estado=document.createElement('p');
+    estado.textContent=p.publicado?
+      '✅ Marcado como publicado':
+      '⏳ Planejado — publicação manual';
+    card.appendChild(estado);
+
+    const btnCopy=document.createElement('button');
+    btnCopy.textContent='Copiar descrição';
+    btnCopy.onclick=()=>copiar(p.descricao);
+    card.appendChild(btnCopy);
+
+    const btnLink=document.createElement('button');
+    btnLink.textContent='Copiar link';
+    btnLink.onclick=()=>copiar(p.link);
+    card.appendChild(btnLink);
+
+    const btnPublicar=document.createElement('button');
+    btnPublicar.textContent=p.publicado?
+      'Desmarcar publicado':'Marcar publicado';
+    btnPublicar.className='secondary';
+    btnPublicar.onclick=()=>{
+      const item=agenda.find(x=>x.id===p.id);
+      item.publicado=!item.publicado;
+      salvar();
+      renderizar();
+    };
+    card.appendChild(btnPublicar);
+
+    const btnExcluir=document.createElement('button');
+    btnExcluir.textContent='Excluir';
+    btnExcluir.className='secondary';
+    btnExcluir.onclick=()=>{
+      if(!confirm('Excluir esta programação?'))return;
+      agenda=agenda.filter(x=>x.id!==p.id);
+      salvar();
+      renderizar();
+    };
+    card.appendChild(btnExcluir);
+
+    lista.appendChild(card);
+  });
+}
+
+$('form').onsubmit=e=>{
+  e.preventDefault();
+
+  const nome=$('nome').value.trim();
+  const titulo=$('titulo').value.trim();
+  const descricao=$('descricao').value.trim();
+  const link=$('link').value.trim();
+  const imagem=$('imagem').value.trim();
+  const pasta=$('pasta').value.trim();
+  const data=$('data').value;
+  const hora=$('hora').value;
+
+  if(!titulo||!descricao||!link||!pasta||!data||!hora){
+    alert('Preencha os campos obrigatórios.');
+    return;
+  }
+
+  try {
+    if(new URL(link).protocol!=='https:')throw Error();
+    if(imagem && new URL(imagem).protocol!=='https:')throw Error();
+  }catch{
+    alert('Use links HTTPS válidos.');
+    return;
+  }
+
+  agenda.push({
+    id:crypto.randomUUID(),
+    nome,titulo,descricao,link,imagem,
+    pasta,data,hora,publicado:false
+  });
+
+  salvar();
+  renderizar();
+  $('form').reset();
+  alert('Pin adicionado ao planejamento!');
+};
+
+$('backup').onclick=()=>{
+  const blob=new Blob(
+    [JSON.stringify(agenda,null,2)],
+    {type:'application/json'}
+  );
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='backup-agenda-pinterest.json';
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+carregarProdutos();
+renderizar();
+</script>
+</body>
+</html>
