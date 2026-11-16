@@ -170,6 +170,81 @@ if (typeof item.offerLink === 'string') {
   } catch {}
 }
 
+const nomeProduto = String(item.productName || 'Produto da Shopee');
+const linkProduto = String(item.offerLink || '');
+
+const copiarDivulgacao = async (texto, tipo) => {
+  try {
+    await navigator.clipboard.writeText(texto);
+    setStatus(tipo + ' copiado! Agora é só colar onde quiser.', 'ok');
+  } catch {
+    setStatus('Não foi possível copiar automaticamente.', 'error');
+  }
+};
+
+const legenda = `✨ Olha esse achadinho da Shopee!
+
+🛍️ ${nomeProduto}
+
+Uma opção para conhecer e conferir todos os detalhes no anúncio.
+
+👉 Confira no link:
+${linkProduto || '[Insira seu link de afiliada]'}
+
+#AchadinhosShopee #ShopeeBrasil #Achadinhos #DicasDeCompras
+#Publicidade #LinkDeAfiliado`;
+
+const promptImagem = `Create an ultra-realistic UGC/POV product lifestyle photo,
+as if taken with an iPhone 15.
+
+PRODUCT: ${nomeProduto}
+
+Use the original product photo as the primary reference.
+Preserve the exact product shape, colors, proportions, materials,
+logos and all visible details. Do not invent or change features.
+
+Show the product naturally in a suitable real Brazilian home
+environment or being used in a realistic everyday situation.
+Natural daylight, authentic textures, handheld smartphone look,
+subtle imperfections, realistic shadows, no artificial CGI look.
+
+Vertical 9:16 composition. No text overlays.
+Do not invent product functions or benefits.`;
+
+const promptVideo = `Create a realistic 10-second vertical UGC product video.
+
+PRODUCT: ${nomeProduto}
+
+Use the original product image as the reference.
+Preserve the real design, colors, shape and all visible details.
+Do not add accessories or invent product features.
+
+Scene 1 (0-3s): Natural POV close-up introducing the product.
+Scene 2 (3-7s): Demonstrate one real, visually verifiable use.
+Scene 3 (7-10s): Natural beauty shot of the product in context.
+
+Natural handheld iPhone 15 camera motion, realistic lighting,
+Brazilian home setting, authentic human movements, no CGI look.
+
+Voiceover: natural Brazilian Portuguese, friendly UGC creator.
+Suggested spoken line:
+"Olha esse achadinho que eu encontrei! Gostei da proposta
+e vou deixar o link pra você conferir todos os detalhes."
+
+No exaggerated claims, no invented features, no fake testimonials.`;
+
+[
+  ['📝 Copiar legenda', legenda, 'Legenda'],
+  ['📸 Prompt imagem UGC', promptImagem, 'Prompt de imagem'],
+  ['🎬 Prompt vídeo Flow', promptVideo, 'Prompt de vídeo']
+].forEach(([titulo, texto, tipo]) => {
+  const botao = document.createElement('button');
+  botao.type = 'button';
+  botao.textContent = titulo;
+  botao.addEventListener('click', () => copiarDivulgacao(texto, tipo));
+  buttons.appendChild(botao);
+});
+
 content.appendChild(buttons);
 article.appendChild(content);
 return article;
