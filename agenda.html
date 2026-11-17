@@ -629,6 +629,92 @@ botaoLote.onclick = () => {
   campo.readOnly = true;
   janela.appendChild(campo);
 
+const galeria = document.createElement('div');
+galeria.style.display = 'grid';
+galeria.style.gridTemplateColumns =
+  'repeat(auto-fit, minmax(180px, 1fr))';
+galeria.style.gap = '12px';
+galeria.style.marginTop = '20px';
+
+pins.forEach((pin, i) => {
+  const bloco = document.createElement('div');
+  bloco.style.padding = '12px';
+  bloco.style.border = '1px solid #eadbd3';
+  bloco.style.borderRadius = '10px';
+
+  const nome = document.createElement('strong');
+  nome.textContent = 'Pin ' + (i + 1) + ': ' + pin.titulo;
+  bloco.appendChild(nome);
+
+  const foto = document.createElement('img');
+  foto.alt = pin.titulo;
+  foto.style.width = '100%';
+  foto.style.height = '180px';
+  foto.style.objectFit = 'contain';
+  foto.style.marginTop = '10px';
+  foto.style.borderRadius = '8px';
+
+  const aviso = document.createElement('p');
+
+  const abrir = document.createElement('button');
+  abrir.textContent = '🖼️ Abrir imagem';
+  abrir.type = 'button';
+
+  function mostrarFoto() {
+    if (pin.imagem && /^https:\/\//i.test(pin.imagem)) {
+      foto.style.display = 'block';
+      aviso.textContent = '';
+      abrir.style.display = 'inline-block';
+      foto.src = pin.imagem;
+    } else {
+      foto.style.display = 'none';
+      abrir.style.display = 'none';
+      aviso.textContent = 'Imagem não cadastrada.';
+    }
+  }
+
+  foto.onerror = () => {
+    foto.style.display = 'none';
+    aviso.textContent = 'Não foi possível carregar a imagem.';
+  };
+
+  abrir.onclick = () => {
+    window.open(pin.imagem, '_blank', 'noopener');
+  };
+
+  const campoUrl = document.createElement('input');
+  campoUrl.type = 'url';
+  campoUrl.placeholder = 'Cole o link HTTPS da imagem';
+  campoUrl.value = pin.imagem || '';
+
+  const salvarFoto = document.createElement('button');
+  salvarFoto.type = 'button';
+  salvarFoto.textContent = '💾 Salvar imagem';
+
+  salvarFoto.onclick = () => {
+    try {
+      const url = new URL(campoUrl.value.trim());
+
+      if (url.protocol !== 'https:') {
+        throw new Error('Use HTTPS');
+      }
+
+      pin.imagem = url.href;
+      salvar();
+      mostrarFoto();
+      alert('Imagem salva no Pin!');
+    } catch {
+      alert('Cole um endereço HTTPS válido da imagem.');
+    }
+  };
+
+  bloco.append(foto, aviso, abrir, campoUrl, salvarFoto);
+  galeria.appendChild(bloco);
+  mostrarFoto();
+});
+
+janela.appendChild(galeria);
+
   const copiar = document.createElement('button');
   copiar.textContent = '📋 Copiar todas as divulgações';
 
