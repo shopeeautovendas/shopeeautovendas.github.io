@@ -170,6 +170,7 @@ $('produto').onchange=()=>{
   $('nome').value=p.name||'';
   $('titulo').value=(p.name||'').slice(0,100);
   $('link').value=p.url||'';
+  $('imagem').value=p.imageUrl||p.image||'';
   $('descricao').value=
     '✨ Confira este achadinho!\n\n'+
     (p.name||'')+'\n\n'+
@@ -199,6 +200,20 @@ function renderizar() {
   ordenada.forEach(p=>{
     const card=document.createElement('div');
     card.className='item';
+
+if (p.imagem && /^https:\/\//i.test(p.imagem)) {
+  const foto = document.createElement('img');
+  foto.src = p.imagem;
+  foto.alt = 'Imagem de ' + (p.nome || p.titulo);
+  foto.loading = 'lazy';
+  foto.style.width = '140px';
+  foto.style.height = '140px';
+  foto.style.objectFit = 'contain';
+  foto.style.borderRadius = '10px';
+  foto.style.background = '#f7f3f0';
+  foto.onerror = () => foto.remove();
+  card.appendChild(foto);
+}
 
     const titulo=document.createElement('h3');
     titulo.textContent=p.titulo;
@@ -301,6 +316,145 @@ $('backup').onclick=()=>{
   a.download='backup-agenda-pinterest.json';
   a.click();
   URL.revokeObjectURL(url);
+};
+
+let mesAgenda = new Date();
+mesAgenda = new Date(
+  mesAgenda.getFullYear(),
+  mesAgenda.getMonth(), 1
+);
+
+const area = document.createElement('section');
+const tituloCalendario = document.createElement('h2');
+tituloCalendario.textContent = '📅 Calendário de Pins';
+area.appendChild(tituloCalendario);
+
+const navegacao = document.createElement('div');
+navegacao.style.display = 'flex';
+navegacao.style.alignItems = 'center';
+navegacao.style.justifyContent = 'space-between';
+navegacao.style.gap = '10px';
+
+const anterior = document.createElement('button');
+anterior.textContent = '‹ Anterior';
+
+const proximo = document.createElement('button');
+proximo.textContent = 'Próximo ›';
+
+const nomeMes = document.createElement('strong');
+navegacao.append(anterior, nomeMes, proximo);
+area.appendChild(navegacao);
+
+const calendario = document.createElement('div');
+calendario.style.display = 'grid';
+calendario.style.gridTemplateColumns = 'repeat(7, minmax(0, 1fr))';
+calendario.style.gap = '5px';
+calendario.style.marginTop = '16px';
+area.appendChild(calendario);
+
+const detalhesDia = document.createElement('div');
+detalhesDia.style.marginTop = '14px';
+area.appendChild(detalhesDia);
+
+$('lista').closest('section').before(area);
+
+function renderCalendario() {
+  calendario.replaceChildren();
+  detalhesDia.replaceChildren();
+
+  const ano = mesAgenda.getFullYear();
+  const mes = mesAgenda.getMonth();
+
+  nomeMes.textContent = mesAgenda.toLocaleDateString('pt-BR', {
+    month: 'long',
+    year: 'numeric'
+  });
+
+  ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].forEach(d => {
+    const label = document.createElement('strong');
+    label.textContent = d;
+    label.style.textAlign = 'center';
+    calendario.appendChild(label);
+  });
+
+  const primeiroDia = new Date(ano, mes, 1).getDay();
+  const totalDias = new Date(ano, mes + 1, 0).getDate();
+
+  for (let i = 0; i < primeiroDia; i++) {
+    calendario.appendChild(document.createElement('span'));
+  }
+
+  for (let dia = 1; dia <= totalDias; dia++) {
+    const data = [
+      ano,
+      String(mes + 1).padStart(2, '0'),
+      String(dia).padStart(2, '0')
+    ].join('-');
+
+    const pins = agenda.filter(p => p.data === data);
+
+    const botao = document.createElement('button');
+    botao.style.padding = '8px 2px';
+    botao.style.minWidth = '0';
+    botao.style.fontSize = '12px';
+    botao.style.background = pins.length ? '#ee4d2d' : '#f3eee9';
+    botao.style.color = pins.length ? '#fff' : '#29252a';
+    botao.textContent = String(dia);
+
+    if (pins.length) {
+      const total = document.createElement('small');
+      total.style.display = 'block';
+      total.style.color = 'inherit';
+      total.textContent = pins.length + ' Pin(s)';
+      botao.appendChild(total);
+    }
+
+    botao.onclick = () => {
+      detalhesDia.replaceChildren();
+
+      const cabecalho = document.createElement('strong');
+      cabecalho.textContent = dia + '/' + (mes + 1) + '/' + ano;
+      detalhesDia.appendChild(cabecalho);
+
+      pins.forEach(p => {
+        const linha = document.createElement('p');
+        linha.textContent =
+          p.hora + ' — ' + p.titulo +
+          (p.publicado ? ' ✅' : ' ⏳');
+        detalhesDia.appendChild(linha);
+      });
+
+      if (!pins.length) {
+        const vazio = document.createElement('p');
+        vazio.textContent = 'Nenhum Pin planejado neste dia.';
+        detalhesDia.appendChild(vazio);
+      }
+    };
+
+    calendario.appendChild(botao);
+  }
+}
+
+anterior.onclick = () => {
+  mesAgenda = new Date(
+    mesAgenda.getFullYear(),
+    mesAgenda.getMonth() - 1, 1
+  );
+  renderCalendario();
+};
+
+proximo.onclick = () => {
+  mesAgenda = new Date(
+    mesAgenda.getFullYear(),
+    mesAgenda.getMonth() + 1, 1
+  );
+  renderCalendario();
+};
+
+const renderAgendaOriginal = renderizar;
+renderizar = function() {
+  renderAgendaOriginal();
+  renderCalendario();
 };
 
 carregarProdutos();
