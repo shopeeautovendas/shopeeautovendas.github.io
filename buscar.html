@@ -271,6 +271,72 @@ gerarAfiliado.addEventListener('click', async () => {
     });
 
     resultadoAfiliado.append(campo, copiar);
+    
+const salvarAgenda = document.createElement('button');
+salvarAgenda.type = 'button';
+salvarAgenda.textContent = '📌 Salvar e abrir agenda';
+
+salvarAgenda.addEventListener('click', () => {
+  try {
+    const chaveProdutos = 'shopeeautovendas_v1';
+    const salvos = JSON.parse(
+      localStorage.getItem(chaveProdutos) || '[]'
+    );
+
+    if (!Array.isArray(salvos)) {
+      throw new Error('Lista de produtos inválida');
+    }
+
+    const nome = String(item.productName || 'Produto Shopee');
+    const linkAfiliado = campo.value;
+
+    let produto = salvos.find(p => p.url === linkAfiliado);
+
+    if (!produto) {
+      const preco = Number(
+        String(item.priceMin ?? '').replace(',', '.')
+      );
+
+      const comissao = Number(
+        String(item.commissionRate ?? '').replace(',', '.')
+      );
+
+      produto = {
+        id: 'p_' + Date.now() + '_' +
+          Math.random().toString(36).slice(2, 8),
+        name: nome.slice(0, 150),
+        url: linkAfiliado,
+        price: item.priceMin == null ||
+          !Number.isFinite(preco) ? null : preco,
+        commission: item.commissionRate == null ||
+          !Number.isFinite(comissao) ? null : comissao * 100,
+        category: 'Casa e decoração',
+        benefit: 'Confira os detalhes e características no anúncio.',
+        channel: 'Pinterest',
+        publishDate: '',
+        posted: false
+      };
+
+      salvos.push(produto);
+      localStorage.setItem(
+        chaveProdutos,
+        JSON.stringify(salvos)
+      );
+    }
+
+    setStatus('Produto salvo no painel!', 'ok');
+    window.location.href = 'agenda.html';
+
+  } catch (erro) {
+    setStatus(
+      'Não foi possível salvar: ' + erro.message,
+      'error'
+    );
+  }
+});
+
+resultadoAfiliado.appendChild(salvarAgenda);
+
     content.appendChild(resultadoAfiliado);
 
     setStatus('Link gerado pela API da Shopee!', 'ok');
