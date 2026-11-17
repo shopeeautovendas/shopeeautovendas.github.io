@@ -187,6 +187,107 @@ copiarLink.addEventListener('click', async () => {
 
 buttons.appendChild(copiarLink);
 
+const gerarAfiliado = document.createElement('button');
+gerarAfiliado.type = 'button';
+gerarAfiliado.textContent = '🔗 Gerar link de afiliada';
+
+const resultadoAfiliado = document.createElement('div');
+resultadoAfiliado.style.marginTop = '8px';
+resultadoAfiliado.style.overflowWrap = 'anywhere';
+
+gerarAfiliado.addEventListener('click', async () => {
+  const chave = document.getElementById('panelKey').value;
+
+  if (!chave) {
+    setStatus('Digite sua PAINEL_CHAVE primeiro.', 'error');
+    return;
+  }
+
+  gerarAfiliado.disabled = true;
+  gerarAfiliado.textContent = 'Gerando...';
+
+  try {
+    const resposta = await fetch(
+      'https://shopee-autovendas-api.gabrielalemosdahora.workers.dev/affiliate-link',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Painel-Chave': chave
+        },
+        body: JSON.stringify({
+          originUrl: url.href
+        })
+      }
+    );
+
+    const dados = await resposta.json();
+
+    if (!resposta.ok || !dados.linkAfiliado) {
+      const detalhes = (dados.detalhes || [])
+        .map(e => e.mensagem)
+        .join(' | ');
+
+      throw new Error(
+        detalhes || dados.erro || 'Falha ao gerar link'
+      );
+    }
+
+    const linkGerado = new URL(dados.linkAfiliado);
+
+    if (
+      linkGerado.protocol !== 'https:' ||
+      (
+        linkGerado.hostname !== 's.shopee.com.br' &&
+        linkGerado.hostname !== 'shopee.com.br' &&
+        !linkGerado.hostname.endsWith('.shopee.com.br')
+      )
+    ) {
+      throw new Error('A API retornou um link inesperado.');
+    }
+
+    resultadoAfiliado.replaceChildren();
+
+    const campo = document.createElement('input');
+    campo.type = 'text';
+    campo.readOnly = true;
+    campo.value = linkGerado.href;
+
+    const copiar = document.createElement('button');
+    copiar.type = 'button';
+    copiar.textContent = '📋 Copiar link gerado';
+
+    copiar.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(campo.value);
+        setStatus('Link gerado copiado!', 'ok');
+      } catch {
+        campo.select();
+        setStatus(
+          'Copie o link selecionado com Ctrl + C.',
+          'info'
+        );
+      }
+    });
+
+    resultadoAfiliado.append(campo, copiar);
+    content.appendChild(resultadoAfiliado);
+
+    setStatus('Link gerado pela API da Shopee!', 'ok');
+
+  } catch (erro) {
+    setStatus(
+      'Não foi possível gerar: ' + erro.message,
+      'error'
+    );
+  } finally {
+    gerarAfiliado.disabled = false;
+    gerarAfiliado.textContent = '🔗 Gerar link de afiliada';
+  }
+});
+
+buttons.appendChild(gerarAfiliado);
+
     }
   } catch {}
 }
