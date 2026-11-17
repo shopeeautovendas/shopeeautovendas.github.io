@@ -306,6 +306,7 @@ salvarAgenda.addEventListener('click', () => {
           Math.random().toString(36).slice(2, 8),
         name: nome.slice(0, 150),
         url: linkAfiliado,
+        imageUrl: item.imageUrl || '',
         price: item.priceMin == null ||
           !Number.isFinite(preco) ? null : preco,
         commission: item.commissionRate == null ||
