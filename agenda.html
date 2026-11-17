@@ -215,6 +215,23 @@ if (p.imagem && /^https:\/\//i.test(p.imagem)) {
   card.appendChild(foto);
 }
 
+const selecao = document.createElement('label');
+selecao.style.display = 'flex';
+selecao.style.alignItems = 'center';
+selecao.style.gap = '8px';
+selecao.style.marginBottom = '12px';
+
+const marcar = document.createElement('input');
+marcar.type = 'checkbox';
+marcar.dataset.pinSelect = p.id;
+marcar.style.width = 'auto';
+
+const textoSelecao = document.createElement('span');
+textoSelecao.textContent = 'Selecionar este Pin';
+
+selecao.append(marcar, textoSelecao);
+card.appendChild(selecao);
+
     const titulo=document.createElement('h3');
     titulo.textContent=p.titulo;
     card.appendChild(titulo);
@@ -554,6 +571,98 @@ const renderAgendaOriginal = renderizar;
 renderizar = function() {
   renderAgendaOriginal();
   renderCalendario();
+};
+
+const botaoLote = document.createElement('button');
+botaoLote.type = 'button';
+botaoLote.textContent = '📦 Preparar vários Pins';
+
+const secaoLista = $('lista').closest('section');
+secaoLista.insertBefore(botaoLote, $('lista'));
+
+botaoLote.onclick = () => {
+  const selecionados = Array.from(
+    document.querySelectorAll(
+      'input[data-pin-select]:checked'
+    )
+  ).map(campo => campo.dataset.pinSelect);
+
+  const pins = agenda
+    .filter(p => selecionados.includes(p.id))
+    .sort((a, b) =>
+      (a.data + a.hora).localeCompare(b.data + b.hora)
+    );
+
+  if (!pins.length) {
+    alert('Selecione pelo menos um Pin.');
+    return;
+  }
+
+  const conteudo = pins.map((p, i) => {
+    return [
+      'PIN ' + (i + 1),
+      'Data: ' + p.data + ' às ' + p.hora,
+      'Pasta: ' + p.pasta,
+      'Título: ' + p.titulo,
+      'Descrição: ' + p.descricao,
+      'Link de afiliada: ' + p.link,
+      'Imagem: ' + (p.imagem || 'Não informada')
+    ].join('\n');
+  }).join('\n\n--------------------\n\n');
+
+  const janela = document.createElement('dialog');
+  janela.style.width = 'min(650px, 94vw)';
+  janela.style.maxHeight = '90vh';
+  janela.style.overflowY = 'auto';
+  janela.style.borderRadius = '14px';
+  janela.style.padding = '20px';
+
+  const titulo = document.createElement('h2');
+  titulo.textContent = '📦 ' + pins.length +
+    ' Pins preparados';
+  janela.appendChild(titulo);
+
+  const campo = document.createElement('textarea');
+  campo.value = conteudo;
+  campo.rows = 16;
+  campo.style.width = '100%';
+  campo.readOnly = true;
+  janela.appendChild(campo);
+
+  const copiar = document.createElement('button');
+  copiar.textContent = '📋 Copiar todas as divulgações';
+
+  copiar.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(campo.value);
+      alert('Todas as divulgações foram copiadas!');
+    } catch {
+      campo.focus();
+      campo.select();
+      alert('Pressione Ctrl + C para copiar.');
+    }
+  };
+
+  const pinterest = document.createElement('button');
+  pinterest.textContent = '📌 Abrir Pinterest';
+  pinterest.onclick = () => {
+    window.open(
+      'https://www.pinterest.com/',
+      '_blank',
+      'noopener'
+    );
+  };
+
+  const fechar = document.createElement('button');
+  fechar.textContent = 'Fechar';
+  fechar.className = 'secondary';
+  fechar.onclick = () => janela.close();
+
+  janela.append(copiar, pinterest, fechar);
+  janela.onclose = () => janela.remove();
+
+  document.body.appendChild(janela);
+  janela.showModal();
 };
 
 carregarProdutos();
