@@ -241,6 +241,105 @@ if (p.imagem && /^https:\/\//i.test(p.imagem)) {
     btnLink.onclick=()=>copiar(p.link);
     card.appendChild(btnLink);
 
+const preparar = document.createElement('button');
+preparar.type = 'button';
+preparar.textContent = '📌 Preparar publicação';
+
+preparar.onclick = () => {
+  const janela = document.createElement('dialog');
+
+  janela.style.width = 'min(520px, 94vw)';
+  janela.style.maxHeight = '90vh';
+  janela.style.overflowY = 'auto';
+  janela.style.border = '1px solid #eadbd3';
+  janela.style.borderRadius = '14px';
+  janela.style.padding = '20px';
+
+  const adicionarTexto = (tag, texto) => {
+    const el = document.createElement(tag);
+    el.textContent = texto;
+    janela.appendChild(el);
+    return el;
+  };
+
+  adicionarTexto('h2', '📌 Publicação preparada');
+
+  if (p.imagem && /^https:\/\//i.test(p.imagem)) {
+    const foto = document.createElement('img');
+    foto.src = p.imagem;
+    foto.alt = p.titulo;
+    foto.style.width = '100%';
+    foto.style.maxHeight = '260px';
+    foto.style.objectFit = 'contain';
+    janela.appendChild(foto);
+
+    const abrirImagem = document.createElement('button');
+    abrirImagem.textContent = '🖼️ Abrir imagem';
+    abrirImagem.onclick = () => {
+      window.open(p.imagem, '_blank', 'noopener');
+    };
+    janela.appendChild(abrirImagem);
+  }
+
+  adicionarTexto('h3', p.titulo);
+
+  const descricao = document.createElement('textarea');
+  descricao.value = p.descricao;
+  descricao.rows = 6;
+  descricao.readOnly = true;
+  janela.appendChild(descricao);
+
+  adicionarTexto('p', '🔗 Link de afiliada:');
+
+  const link = document.createElement('input');
+  link.value = p.link;
+  link.readOnly = true;
+  janela.appendChild(link);
+
+  const botaoCopiar = document.createElement('button');
+  botaoCopiar.textContent = '📋 Copiar divulgação';
+
+  botaoCopiar.onclick = async () => {
+    const texto =
+      p.titulo + '\n\n' +
+      p.descricao + '\n\n' +
+      'Link de afiliada: ' + p.link;
+
+    try {
+      await navigator.clipboard.writeText(texto);
+      alert('Divulgação copiada!');
+    } catch {
+      alert('Não foi possível copiar automaticamente.');
+    }
+  };
+
+  janela.appendChild(botaoCopiar);
+
+  const abrirPinterest = document.createElement('button');
+  abrirPinterest.textContent = '📌 Abrir Pinterest';
+  abrirPinterest.onclick = () => {
+    window.open(
+      'https://www.pinterest.com/',
+      '_blank',
+      'noopener'
+    );
+  };
+  janela.appendChild(abrirPinterest);
+
+  const fechar = document.createElement('button');
+  fechar.textContent = 'Fechar';
+  fechar.className = 'secondary';
+  fechar.onclick = () => janela.close();
+  janela.appendChild(fechar);
+
+  janela.onclose = () => janela.remove();
+
+  document.body.appendChild(janela);
+  janela.showModal();
+};
+
+card.appendChild(preparar);
+
     const btnPublicar=document.createElement('button');
     btnPublicar.textContent=p.publicado?
       'Desmarcar publicado':'Marcar publicado';
