@@ -580,6 +580,38 @@ botaoLote.textContent = '📦 Preparar vários Pins';
 const secaoLista = $('lista').closest('section');
 secaoLista.insertBefore(botaoLote, $('lista'));
 
+const selecionarPendentes = document.createElement('button');
+selecionarPendentes.type = 'button';
+selecionarPendentes.className = 'secondary';
+selecionarPendentes.textContent =
+  '✅ Selecionar todos os Pins pendentes';
+
+secaoLista.insertBefore(selecionarPendentes, botaoLote);
+
+selecionarPendentes.onclick = () => {
+  const pendentes = new Set(
+    agenda.filter(p => !p.publicado).map(p => String(p.id))
+  );
+
+  let total = 0;
+
+  document.querySelectorAll(
+    '#lista input[data-pin-select]'
+  ).forEach(campo => {
+    const selecionar = pendentes.has(
+      campo.dataset.pinSelect
+    );
+
+    campo.checked = selecionar;
+
+    if (selecionar) total++;
+  });
+
+  if (total === 0) {
+    alert('Não há Pins pendentes para selecionar.');
+  }
+};
+
 botaoLote.onclick = () => {
   const selecionados = Array.from(
     document.querySelectorAll(
