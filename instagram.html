@@ -26,6 +26,29 @@
 <div class="grid"><div><label for="date">Data planejada</label><input id="date" type="date" required></div><div><label for="time">Horário de Brasília</label><input id="time" type="time" value="19:00" required></div></div>
 <button type="submit">📅 Salvar na Agenda Instagram</button><button type="reset" class="secondary">Limpar</button>
 </form></section>
+ 
+<section>
+  <h2>📸 Integração com Instagram</h2>
+  <p class="muted">
+    Prepare imagens das publicações já salvas.
+    Esta função não publica no Instagram.
+  </p>
+
+  <label for="instagramKey">
+    Chave privada do painel
+  </label>
+  <input
+    id="instagramKey"
+    type="password"
+    autocomplete="off"
+    placeholder="Digite sua PAINEL_CHAVE"
+  >
+
+  <p id="instagramStatus" role="status" class="muted">
+    Escolha uma publicação com foto na lista abaixo.
+  </p>
+</section>
+
 <section><h2>📅 Calendário Instagram</h2><div class="toolbar"><button class="secondary" id="prev" type="button">‹ Anterior</button><strong id="month"></strong><button class="secondary" id="next" type="button">Próximo ›</button></div><div id="calendar" class="calendar"></div><div id="dayDetail" class="muted" style="margin-top:10px"></div></section>
 <section><h2>🗂️ Publicações planejadas</h2><button type="button" id="backup" class="secondary">⬇ Baixar backup Instagram</button><div id="posts"></div></section>
 </main>
@@ -125,11 +148,92 @@ function calendar(){const grid=$('calendar');grid.replaceChildren();$('dayDetail
 }
 $('prev').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()-1,1);calendar()};$('next').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()+1,1);calendar()};
 function copy(v){navigator.clipboard.writeText(v).then(()=>alert('Copiado!')).catch(()=>alert('Não foi possível copiar.'))}
+      
+async function prepararInstagram(post) {
+  const key = $('instagramKey').value.trim();
+  const status = $('instagramStatus');
+
+  if (!key) {
+    alert('Digite sua chave privada do painel.');
+    $('instagramKey').focus();
+    return;
+  }
+
+  if (post.kind !== 'Foto') {
+    alert('Por enquanto, somente fotos são aceitas.');
+    return;
+  }
+
+  if (!post.image || !validHttps(post.image)) {
+    alert('Esta publicação não possui foto HTTPS válida.');
+    return;
+  }
+
+  if (!confirm(
+    'Preparar esta imagem na conta @ornatocasa_? ' +
+    'Nenhuma publicação será realizada.'
+  )) return;
+
+  status.textContent = 'Preparando imagem na Meta...';
+
+  try {
+    const resposta = await fetch(
+      'https://shopee-autovendas-api.gabrielalemosdahora.workers.dev/instagram-prepare',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Painel-Chave': key
+        },
+        body: JSON.stringify({
+          imageUrl: post.image
+        })
+      }
+    );
+
+    const dados = await resposta.json();
+
+    if (!resposta.ok || !dados.preparado) {
+      throw new Error(
+        dados.erro || dados.mensagem ||
+        'Não foi possível preparar a imagem.'
+      );
+    }
+
+    if (dados.publicado !== false) {
+      throw new Error(
+        'A API não confirmou que a imagem continua sem publicação.'
+      );
+    }
+
+    status.textContent =
+      '✅ Imagem preparada na Meta. Não publicada.';
+
+    alert(
+      'Imagem preparada com sucesso!\n' +
+      'Conta: @ornatocasa_\n' +
+      'Nenhuma postagem foi publicada.'
+    );
+
+  } catch (erro) {
+    status.textContent =
+      '❌ Falha na preparação: ' + erro.message;
+  }
+}
+
 function render(){const root=$('posts');root.replaceChildren();let ordered=[...posts].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));if(!ordered.length)root.textContent='Nenhuma publicação planejada.';
  ordered.forEach(p=>{const box=document.createElement('div');box.className='entry';const heading=document.createElement('h3');heading.textContent=p.name;box.appendChild(heading);const meta=document.createElement('p');meta.textContent=p.date.split('-').reverse().join('/')+' às '+p.time+' · '+p.kind+(p.posted?' · ✅ Publicado':' · ⏳ Planejado');box.appendChild(meta);
  if(p.image&&validHttps(p.image)){const im=document.createElement('img');im.src=p.image;im.alt=p.name;im.loading='lazy';im.onerror=()=>im.remove();box.appendChild(im)}
  if(p.video){const v=document.createElement('p');v.textContent='🎬 Vídeo: '+p.video;box.appendChild(v)}
  const addButton=(label,fn,secondary=false)=>{const b=document.createElement('button');b.type='button';b.textContent=label;if(secondary)b.className='secondary';b.onclick=fn;box.appendChild(b)};
+ 
+if (p.kind === 'Foto' && p.image && validHttps(p.image)) {
+  addButton(
+    '📸 Preparar para Instagram',
+    () => prepararInstagram(p)
+  );
+}
+                    
  addButton('📋 Copiar legenda',()=>copy(p.caption));if(p.affiliate)addButton('🔗 Copiar link',()=>copy(p.affiliate));addButton('📸 Abrir Instagram',()=>window.open('https://www.instagram.com/','_blank','noopener'));addButton(p.posted?'Desmarcar publicado':'Marcar publicado',()=>{p.posted=!p.posted;save();render()},true);addButton('Excluir',()=>{if(confirm('Excluir este planejamento?')){posts=posts.filter(x=>x.id!==p.id);save();render()}},true);root.appendChild(box)
  });calendar()}
 $('postForm').onsubmit=e=>{e.preventDefault();const name=$('name').value.trim(),caption=$('caption').value.trim(),affiliate=$('affiliate').value.trim(),image=$('image').value.trim(),date=$('date').value,time=$('time').value;if(!name||!caption||!date||!time){alert('Preencha nome, legenda, data e horário.');return}if((affiliate&&!validHttps(affiliate))||(image&&!validHttps(image))){alert('Use links HTTPS válidos.');return}posts.push({id:crypto.randomUUID(),name,caption,affiliate,image,video:$('video').value.trim(),kind:$('kind').value,date,time,posted:false});try{save()}catch{alert('Não foi possível salvar. Verifique o armazenamento do navegador.');return}render();$('postForm').reset();alert('Publicação salva na Agenda Instagram! (Não foi publicada)')};
