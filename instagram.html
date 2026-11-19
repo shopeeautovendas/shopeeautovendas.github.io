@@ -68,7 +68,13 @@ const produtosUnicos = new Map();
 products.forEach(p => {
   if (!p?.id || !p?.name) return;
 
-  const chave = p.name.trim().toLowerCase();
+  
+const chave = p.name
+  .normalize('NFKD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase()
+  .replace(/[^a-z0-9]/g, '');
+
   const existente = produtosUnicos.get(chave);
 
   const temFoto = produto =>
