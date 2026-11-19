@@ -290,7 +290,12 @@ salvarAgenda.addEventListener('click', () => {
     const nome = String(item.productName || 'Produto Shopee');
     const linkAfiliado = campo.value;
 
-    let produto = salvos.find(p => p.url === linkAfiliado);
+   
+let produto = salvos.find(p =>
+  p.url === linkAfiliado ||
+  p.name === nome.slice(0, 150)
+);
+
 
     if (!produto) {
       const preco = Number(
@@ -318,12 +323,20 @@ salvarAgenda.addEventListener('click', () => {
         posted: false
       };
 
+     
       salvos.push(produto);
-      localStorage.setItem(
-        chaveProdutos,
-        JSON.stringify(salvos)
-      );
+    } else {
+      // Atualiza a imagem sem perder os outros dados.
+      if (item.imageUrl) {
+        produto.imageUrl = item.imageUrl;
+      }
     }
+
+    localStorage.setItem(
+      chaveProdutos,
+      JSON.stringify(salvos)
+    );
+
 
     setStatus('Produto salvo no painel!', 'ok');
     window.location.href = 'agenda.html';
