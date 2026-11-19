@@ -60,7 +60,29 @@ function makeCaption(){
  $('caption').value=copy[style]||copy.Comercial;
 }
 $('makeCaption').onclick=makeCaption;
-const sel=$('product');products.forEach(p=>{if(p?.id&&p?.name)sel.add(new Option(p.name,p.id))});
+
+const sel = $('product');
+
+const produtosUnicos = new Map();
+
+products.forEach(p => {
+  if (!p?.id || !p?.name) return;
+
+  const chave = p.name.trim().toLowerCase();
+  const existente = produtosUnicos.get(chave);
+
+  const temFoto = produto =>
+    Boolean(produto?.imageUrl || produto?.image);
+
+  if (!existente || (!temFoto(existente) && temFoto(p))) {
+    produtosUnicos.set(chave, p);
+  }
+});
+
+produtosUnicos.forEach(p => {
+  sel.add(new Option(p.name, p.id));
+});
+
 
 function mostrarFoto() {
   const area = $('fotoPreview');
