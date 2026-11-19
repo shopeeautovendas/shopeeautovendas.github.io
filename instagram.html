@@ -185,9 +185,13 @@ async function prepararInstagram(post) {
           'Content-Type': 'application/json',
           'X-Painel-Chave': key
         },
-        body: JSON.stringify({
-          imageUrl: post.image
-        })
+        
+       
+body: JSON.stringify({
+  imageUrl: post.image,
+  caption: post.caption
+})
+
       }
     );
 
