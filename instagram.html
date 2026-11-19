@@ -18,6 +18,9 @@
 <button type="button" id="makeCaption">✍️ Gerar legenda gratuita</button>
 <label for="caption">Legenda editável</label><textarea id="caption" required maxlength="2200" placeholder="Gere ou escreva sua legenda"></textarea>
 <label for="affiliate">Link de afiliada (referência para bio ou Stories)</label><input id="affiliate" type="url" placeholder="https://s.shopee.com.br/...">
+ 
+<div id="fotoPreview" style="margin-top:12px"></div>
+
 <label for="image">Link HTTPS da imagem (opcional)</label><input id="image" type="url" placeholder="https://...">
 <label for="video">Nome ou referência do vídeo do Google Flow (opcional)</label><input id="video" maxlength="200" placeholder="Ex.: porta-frios-flow.mp4 — salvo no meu celular">
 <div class="grid"><div><label for="date">Data planejada</label><input id="date" type="date" required></div><div><label for="time">Horário de Brasília</label><input id="time" type="time" value="19:00" required></div></div>
@@ -58,6 +61,32 @@ function makeCaption(){
 }
 $('makeCaption').onclick=makeCaption;
 const sel=$('product');products.forEach(p=>{if(p?.id&&p?.name)sel.add(new Option(p.name,p.id))});
+
+function mostrarFoto() {
+  const area = $('fotoPreview');
+  area.replaceChildren();
+
+  const url = $('image').value.trim();
+  if (!validHttps(url)) {
+    area.textContent = '📷 Este produto ainda não possui imagem salva.';
+    return;
+  }
+
+  const img = document.createElement('img');
+  img.src = url;
+  img.alt = 'Foto do produto';
+  img.style.cssText =
+    'max-width:220px;width:100%;border-radius:12px;margin-top:8px;';
+  img.onerror = () => {
+    area.textContent = 'Não foi possível carregar a foto.';
+  };
+
+  area.appendChild(img);
+}
+
+$('image').addEventListener('input', mostrarFoto);
+sel.addEventListener('change', mostrarFoto);
+      
 sel.onchange=()=>{const p=products.find(x=>String(x.id)===sel.value);if(!p)return;$('name').value=p.name||'';$('affiliate').value=p.url||'';$('image').value=p.imageUrl||p.image||'';makeCaption()};
 let month=new Date();month=new Date(month.getFullYear(),month.getMonth(),1);
 function calendar(){const grid=$('calendar');grid.replaceChildren();$('dayDetail').textContent='';$('month').textContent=month.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
