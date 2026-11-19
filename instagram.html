@@ -210,6 +210,15 @@ body: JSON.stringify({
       );
     }
 
+if (dados.containerId) {
+  post.containerId = String(dados.containerId);
+  post.preparadoEm = new Date().toISOString();
+  post.legendaPreparada = post.caption;
+
+  save();
+  render();
+}
+
     status.textContent =
       '✅ Imagem preparada na Meta. Não publicada.';
 
