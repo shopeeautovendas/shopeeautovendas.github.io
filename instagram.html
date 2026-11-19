@@ -234,6 +234,66 @@ if (dados.containerId) {
   }
 }
 
+async function consultarStatusInstagram(post) {
+  const key = $('instagramKey').value.trim();
+  const status = $('instagramStatus');
+
+  if (!key) {
+    alert('Digite sua chave privada do painel.');
+    return;
+  }
+
+  if (!post.containerId) {
+    alert('Prepare a imagem primeiro.');
+    return;
+  }
+
+  status.textContent = 'Consultando a Meta...';
+
+  try {
+    const resposta = await fetch(
+      'https://shopee-autovendas-api.gabrielalemosdahora.workers.dev/instagram-status',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Painel-Chave': key
+        },
+        body: JSON.stringify({
+          containerId: post.containerId
+        })
+      }
+    );
+
+    const dados = await resposta.json();
+
+    if (!resposta.ok || !dados.consultado) {
+      throw new Error(
+        dados.erro || 'Não foi possível consultar.'
+      );
+    }
+
+    post.statusMeta = dados.status;
+    save();
+    render();
+
+    const mensagens = {
+      FINISHED: '✅ Imagem pronta, mas não publicada.',
+      IN_PROGRESS: '⏳ Imagem em processamento.',
+      ERROR: '❌ Erro no processamento.',
+      EXPIRED: '⚠️ Preparação expirada.',
+      PUBLISHED: '✅ A Meta informa que a mídia foi publicada.'
+    };
+
+    status.textContent =
+      mensagens[dados.status] ||
+      'Status: ' + dados.status;
+
+  } catch (erro) {
+    status.textContent = '❌ ' + erro.message;
+  }
+}
+
 function render(){const root=$('posts');root.replaceChildren();let ordered=[...posts].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));if(!ordered.length)root.textContent='Nenhuma publicação planejada.';
  ordered.forEach(p=>{const box=document.createElement('div');box.className='entry';const heading=document.createElement('h3');heading.textContent=p.name;box.appendChild(heading);const meta=document.createElement('p');meta.textContent=p.date.split('-').reverse().join('/')+' às '+p.time+' · '+p.kind+(p.posted?' · ✅ Publicado':' · ⏳ Planejado');box.appendChild(meta);
  if(p.image&&validHttps(p.image)){const im=document.createElement('img');im.src=p.image;im.alt=p.name;im.loading='lazy';im.onerror=()=>im.remove();box.appendChild(im)}
@@ -247,7 +307,13 @@ if (p.kind === 'Foto' && p.image && validHttps(p.image)) {
   );
 }
                     
- addButton('📋 Copiar legenda',()=>copy(p.caption));if(p.affiliate)addButton('🔗 Copiar link',()=>copy(p.affiliate));addButton('📸 Abrir Instagram',()=>window.open('https://www.instagram.com/','_blank','noopener'));addButton(p.posted?'Desmarcar publicado':'Marcar publicado',()=>{p.posted=!p.posted;save();render()},true);addButton('Excluir',()=>{if(confirm('Excluir este planejamento?')){posts=posts.filter(x=>x.id!==p.id);save();render()}},true);root.appendChild(box)
+ addButton('📋 Copiar legenda',()=>copy(p.caption));if(p.affiliate)addButton('🔗 Copiar link',()=>copy(p.affiliate));if (p.containerId) {
+  addButton(
+    '🔎 Consultar status na Meta',
+    () => consultarStatusInstagram(p),
+    true
+  );
+} addButton('📸 Abrir Instagram',()=>window.open('https://www.instagram.com/','_blank','noopener'));addButton(p.posted?'Desmarcar publicado':'Marcar publicado',()=>{p.posted=!p.posted;save();render()},true);addButton('Excluir',()=>{if(confirm('Excluir este planejamento?')){posts=posts.filter(x=>x.id!==p.id);save();render()}},true);root.appendChild(box)
  });calendar()}
 $('postForm').onsubmit=e=>{e.preventDefault();const name=$('name').value.trim(),caption=$('caption').value.trim(),affiliate=$('affiliate').value.trim(),image=$('image').value.trim(),date=$('date').value,time=$('time').value;if(!name||!caption||!date||!time){alert('Preencha nome, legenda, data e horário.');return}if((affiliate&&!validHttps(affiliate))||(image&&!validHttps(image))){alert('Use links HTTPS válidos.');return}posts.push({id:crypto.randomUUID(),name,caption,affiliate,image,video:$('video').value.trim(),kind:$('kind').value,date,time,posted:false});try{save()}catch{alert('Não foi possível salvar. Verifique o armazenamento do navegador.');return}render();$('postForm').reset();alert('Publicação salva na Agenda Instagram! (Não foi publicada)')};
 $('backup').onclick=()=>{const blob=new Blob([JSON.stringify(posts,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='backup-agenda-instagram.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)};
