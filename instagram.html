@@ -87,7 +87,7 @@ function mostrarFoto() {
 $('image').addEventListener('input', mostrarFoto);
 sel.addEventListener('change', mostrarFoto);
       
-sel.onchange=()=>{const p=products.find(x=>String(x.id)===sel.value);if(!p)return;$('name').value=p.name||'';$('affiliate').value=p.url||'';$('image').value=p.imageUrl||p.image||'';makeCaption()};
+sel.onchange=()=>{const p=products.find(x=>String(x.id)===sel.value);if(!p)return;$('name').value=p.name||'';$('affiliate').value=p.url||'';$('image').value=p.imageUrl||p.image||'';makeCaption();mostrarFoto()};
 let month=new Date();month=new Date(month.getFullYear(),month.getMonth(),1);
 function calendar(){const grid=$('calendar');grid.replaceChildren();$('dayDetail').textContent='';$('month').textContent=month.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
  for(const d of ['D','S','T','Q','Q','S','S']){const el=document.createElement('strong');el.textContent=d;grid.appendChild(el)}
