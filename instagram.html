@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agenda Instagram | Shopee AutoVendas</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#fff7f3;color:#28232b;font:16px/1.5 system-ui,Arial,sans-serif}header{background:linear-gradient(110deg,#d62976,#f77737);color:white;padding:24px}header a{color:white}main{max-width:950px;margin:20px auto;padding:0 15px 45px}section{background:white;border:1px solid #ead9df;border-radius:14px;padding:18px;margin-bottom:16px}h1,h2{margin:0 0 10px}h2{font-size:1.15rem}label{font-weight:650;display:block;margin-top:12px}input,select,textarea{width:100%;font:inherit;padding:10px;border:1px solid #cfc6ce;border-radius:8px;margin-top:5px}textarea{min-height:150px}button,a.btn{display:inline-block;border:0;border-radius:9px;padding:10px 13px;margin:7px 7px 0 0;background:#bc2f70;color:white;font-weight:700;text-decoration:none;cursor:pointer;font:inherit}button.secondary{background:#59515b}button:disabled{opacity:.5}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.notice{background:#fff0f6;padding:12px;border-radius:9px}.entry{border:1px solid #ead9df;border-radius:10px;padding:14px;margin-top:12px;overflow-wrap:anywhere}.entry img{width:130px;height:150px;object-fit:contain;border-radius:7px}.muted{color:#655d65;font-size:.88rem}.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}.calendar button{margin:0;padding:7px 2px;font-size:.85rem;min-height:53px;background:#f3eaf0;color:#29232c}.calendar button.has{background:#bc2f70;color:white}.calendar button small{display:block;font-size:.66rem}.calendar strong{text-align:center}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:7px;margin-bottom:12px}.toolbar button{margin:0}.toolbar strong{text-align:center}@media(max-width:550px){.grid{grid-template-columns:1fr}.toolbar button{font-size:.75rem;padding:7px}.calendar button{font-size:.75rem}}
+</style>
+</head>
+<body><header><h1>📸 Agenda Instagram</h1><p>Shopee AutoVendas • @ornatocasa_</p><a href="index.html">← Voltar ao painel</a></header>
+<main>
+<section><p class="notice"><strong>Planejamento manual.</strong> Esta página não envia fotos, Reels ou Stories ao Instagram. Os registros ficam salvos apenas neste navegador. Faça backup regularmente.</p></section>
+<section><h2>➕ Preparar publicação</h2><form id="postForm">
+<label for="product">Produto salvo no painel</label><select id="product"><option value="">Escolha um produto ou preencha manualmente</option></select>
+<label for="name">Nome do produto</label><input id="name" required maxlength="150" placeholder="Ex.: Porta-frios duplo">
+<label for="kind">Tipo de publicação</label><select id="kind"><option value="Foto">Foto</option><option value="Reel">Reel (vídeo do Google Flow)</option><option value="Carrossel">Carrossel</option></select>
+<label for="style">Estilo da legenda</label><select id="style"><option value="Comercial">🛍️ Comercial</option><option value="UGC">📱 UGC natural</option><option value="SEO">🔎 Otimizada para buscas</option></select>
+<button type="button" id="makeCaption">✍️ Gerar legenda gratuita</button>
+<label for="caption">Legenda editável</label><textarea id="caption" required maxlength="2200" placeholder="Gere ou escreva sua legenda"></textarea>
+<label for="affiliate">Link de afiliada (referência para bio ou Stories)</label><input id="affiliate" type="url" placeholder="https://s.shopee.com.br/...">
+<label for="image">Link HTTPS da imagem (opcional)</label><input id="image" type="url" placeholder="https://...">
+<label for="video">Nome ou referência do vídeo do Google Flow (opcional)</label><input id="video" maxlength="200" placeholder="Ex.: porta-frios-flow.mp4 — salvo no meu celular">
+<div class="grid"><div><label for="date">Data planejada</label><input id="date" type="date" required></div><div><label for="time">Horário de Brasília</label><input id="time" type="time" value="19:00" required></div></div>
+<button type="submit">📅 Salvar na Agenda Instagram</button><button type="reset" class="secondary">Limpar</button>
+</form></section>
+<section><h2>📅 Calendário Instagram</h2><div class="toolbar"><button class="secondary" id="prev" type="button">‹ Anterior</button><strong id="month"></strong><button class="secondary" id="next" type="button">Próximo ›</button></div><div id="calendar" class="calendar"></div><div id="dayDetail" class="muted" style="margin-top:10px"></div></section>
+<section><h2>🗂️ Publicações planejadas</h2><button type="button" id="backup" class="secondary">⬇ Baixar backup Instagram</button><div id="posts"></div></section>
+</main>
+<script>
+(()=>{'use strict';
+const KEY='shopee_agenda_instagram_v1',PRODUCT_KEY='shopeeautovendas_v1';
+const $=id=>document.getElementById(id);
+const read=(key)=>{try{const a=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(a)?a:[]}catch{return[]}};
+let posts=read(KEY),products=read(PRODUCT_KEY);
+const save=()=>localStorage.setItem(KEY,JSON.stringify(posts));
+const validHttps=s=>{try{return new URL(s).protocol==='https:'}catch{return false}};
+const clean=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const tags=(n)=>{
+ const t=clean(n);
+ if(/porta.?frios|presunto|queijo/.test(t))return '#PortaFrios #OrganizacaoDeGeladeira #CozinhaOrganizada';
+ if(/organizador|organizadora/.test(t))return '#OrganizacaoDaCasa #CasaOrganizada #Organizadores';
+ if(/almofada/.test(t))return '#AlmofadaDecorativa #DecoracaoDeSala #Decoracao';
+ if(/vestido|blusa|camisa|calca|saia/.test(t))return '#ModaFeminina #LooksFemininos #AchadinhosDeModa';
+ if(/natal|natalina/.test(t))return '#DecoracaoDeNatal #AchadinhosDeNatal #Natal';
+ if(/luminaria|abajur|lampada/.test(t))return '#IluminacaoDecorativa #DecoracaoDeCasa';
+ return '#AchadinhosShopee #DicasDeCompras #ComprasOnline';
+};
+const shortName=name=>{const n=name.split(/\s+(?:para|com|modelo)\s+/i)[0].trim();return n.length>=8&&n.length<=85?n:name.slice(0,85).replace(/\s+\S*$/,'');};
+function makeCaption(){
+ const name=$('name').value.trim();if(!name){alert('Escolha ou digite o produto primeiro.');return}
+ const short=shortName(name),t=tags(name),style=$('style').value;
+ const copy={
+ Comercial:`✨ Olha esse achadinho da Shopee!\n\n🛍️ ${short}\n\nUma opção para conhecer e conferir os detalhes do anúncio.\n\n👉 Confira o link de afiliada na bio ou nos Stories.\n\n${t} #AchadinhosShopee\nPublicidade | Link de afiliada`,
+ UGC:`Gente, olha esse achadinho que encontrei! 😍\n\n🛍️ ${short}\n\nEstou compartilhando essa opção para vocês conferirem as características e variações do anúncio.\n\n💬 O que acharam?\n\n${t} #Achadinhos\nPublicidade | Link de afiliada`,
+ SEO:`🔎 ${short} | Achadinhos Shopee\n\nProcurando algo assim? Veja detalhes, medidas e variações disponíveis no anúncio.\n\n👉 Link de afiliada na bio ou nos Stories.\n\n${t} #AchadinhosShopee\nPublicidade | Link de afiliada`
+ };
+ $('caption').value=copy[style]||copy.Comercial;
+}
+$('makeCaption').onclick=makeCaption;
+const sel=$('product');products.forEach(p=>{if(p?.id&&p?.name)sel.add(new Option(p.name,p.id))});
+sel.onchange=()=>{const p=products.find(x=>String(x.id)===sel.value);if(!p)return;$('name').value=p.name||'';$('affiliate').value=p.url||'';$('image').value=p.imageUrl||p.image||'';makeCaption()};
+let month=new Date();month=new Date(month.getFullYear(),month.getMonth(),1);
+function calendar(){const grid=$('calendar');grid.replaceChildren();$('dayDetail').textContent='';$('month').textContent=month.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+ for(const d of ['D','S','T','Q','Q','S','S']){const el=document.createElement('strong');el.textContent=d;grid.appendChild(el)}
+ for(let n=0;n<new Date(month.getFullYear(),month.getMonth(),1).getDay();n++)grid.appendChild(document.createElement('span'));
+ const count=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
+ for(let d=1;d<=count;d++){const iso=[month.getFullYear(),String(month.getMonth()+1).padStart(2,'0'),String(d).padStart(2,'0')].join('-');const day=posts.filter(p=>p.date===iso);const b=document.createElement('button');b.type='button';b.textContent=d;if(day.length){b.className='has';const label=document.createElement('small');label.textContent=day.length+' post(s)';b.appendChild(label)}b.onclick=()=>{$('dayDetail').textContent=day.length?day.map(p=>p.time+' · '+p.name+(p.posted?' ✅':' ⏳')).join(' | '):'Nenhum post planejado neste dia.'};grid.appendChild(b)}
+}
+$('prev').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()-1,1);calendar()};$('next').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()+1,1);calendar()};
+function copy(v){navigator.clipboard.writeText(v).then(()=>alert('Copiado!')).catch(()=>alert('Não foi possível copiar.'))}
+function render(){const root=$('posts');root.replaceChildren();let ordered=[...posts].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));if(!ordered.length)root.textContent='Nenhuma publicação planejada.';
+ ordered.forEach(p=>{const box=document.createElement('div');box.className='entry';const heading=document.createElement('h3');heading.textContent=p.name;box.appendChild(heading);const meta=document.createElement('p');meta.textContent=p.date.split('-').reverse().join('/')+' às '+p.time+' · '+p.kind+(p.posted?' · ✅ Publicado':' · ⏳ Planejado');box.appendChild(meta);
+ if(p.image&&validHttps(p.image)){const im=document.createElement('img');im.src=p.image;im.alt=p.name;im.loading='lazy';im.onerror=()=>im.remove();box.appendChild(im)}
+ if(p.video){const v=document.createElement('p');v.textContent='🎬 Vídeo: '+p.video;box.appendChild(v)}
+ const addButton=(label,fn,secondary=false)=>{const b=document.createElement('button');b.type='button';b.textContent=label;if(secondary)b.className='secondary';b.onclick=fn;box.appendChild(b)};
+ addButton('📋 Copiar legenda',()=>copy(p.caption));if(p.affiliate)addButton('🔗 Copiar link',()=>copy(p.affiliate));addButton('📸 Abrir Instagram',()=>window.open('https://www.instagram.com/','_blank','noopener'));addButton(p.posted?'Desmarcar publicado':'Marcar publicado',()=>{p.posted=!p.posted;save();render()},true);addButton('Excluir',()=>{if(confirm('Excluir este planejamento?')){posts=posts.filter(x=>x.id!==p.id);save();render()}},true);root.appendChild(box)
+ });calendar()}
+$('postForm').onsubmit=e=>{e.preventDefault();const name=$('name').value.trim(),caption=$('caption').value.trim(),affiliate=$('affiliate').value.trim(),image=$('image').value.trim(),date=$('date').value,time=$('time').value;if(!name||!caption||!date||!time){alert('Preencha nome, legenda, data e horário.');return}if((affiliate&&!validHttps(affiliate))||(image&&!validHttps(image))){alert('Use links HTTPS válidos.');return}posts.push({id:crypto.randomUUID(),name,caption,affiliate,image,video:$('video').value.trim(),kind:$('kind').value,date,time,posted:false});try{save()}catch{alert('Não foi possível salvar. Verifique o armazenamento do navegador.');return}render();$('postForm').reset();alert('Publicação salva na Agenda Instagram! (Não foi publicada)')};
+$('backup').onclick=()=>{const blob=new Blob([JSON.stringify(posts,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='backup-agenda-instagram.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)};
+render();
+})();
+</script>
+</body></html>
