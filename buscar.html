@@ -383,46 +383,148 @@ ${linkProduto || '[Insira seu link de afiliada]'}
 #AchadinhosShopee #ShopeeBrasil #Achadinhos #DicasDeCompras
 #Publicidade #LinkDeAfiliado`;
 
-const nomeCurto = nomeProduto.slice(0, 110);
 
-const tagsProduto = [...new Set(
-  nomeProduto.toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .split(/[^a-z0-9]+/)
-    .filter(p => p.length >= 4 && p.length <= 20)
-)].slice(0, 4).map(p => '#' + p).join(' ');
+const normalizar = texto => String(texto)
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase();
 
-const legendaComercial = `🛍️ ACHADINHO DA SHOPEE!
+const textoProduto = normalizar(nomeProduto);
 
-✨ ${nomeCurto}
+const categorias = [
+  {
+    termos: ['porta frios', 'porta-frios', 'queijo', 'presunto'],
+    nome: 'Porta-frios para geladeira',
+    gancho: '🧀 Quer deixar seus frios mais organizados?',
+    contexto: 'Uma opção para organizar presunto e queijo na geladeira.',
+    tags: '#PortaFrios #OrganizacaoDeGeladeira #CozinhaOrganizada'
+  },
+  {
+    termos: ['organizador', 'organizadora'],
+    nome: 'Organizador',
+    gancho: '✨ Ama uma casa bem organizada?',
+    contexto: 'Uma opção para quem procura soluções de organização.',
+    tags: '#Organizadores #OrganizacaoDaCasa #CasaOrganizada'
+  },
+  {
+    termos: ['almofada', 'capa de almofada'],
+    nome: 'Almofada decorativa',
+    gancho: '🛋️ Um detalhe pode transformar a decoração!',
+    contexto: 'Uma opção para renovar a decoração do ambiente.',
+    tags: '#AlmofadaDecorativa #DecoracaoDeSala #Decoracao'
+  },
+  {
+    termos: ['vestido', 'blusa', 'camisa', 'calca', 'saia'],
+    nome: 'Moda e estilo',
+    gancho: '👗 Procurando inspiração para seus looks?',
+    contexto: 'Uma peça para conhecer e combinar com seu estilo.',
+    tags: '#ModaFeminina #LooksFemininos #AchadinhosDeModa'
+  },
+  {
+    termos: ['luminaria', 'abajur', 'led', 'luz de natal'],
+    nome: 'Iluminação decorativa',
+    gancho: '💡 Quer dar um toque especial ao ambiente?',
+    contexto: 'Uma opção de iluminação para conhecer.',
+    tags: '#IluminacaoDecorativa #DecoracaoDeCasa #Luminaria'
+  },
+  {
+    termos: ['tenis', 'sandalia', 'sapato', 'chinelo'],
+    nome: 'Calçados',
+    gancho: '👟 Olha esse achadinho para seus looks!',
+    contexto: 'Um modelo de calçado para conferir.',
+    tags: '#Calcados #DicasDeModa #AchadinhosShopee'
+  },
+  {
+    termos: ['natal', 'natalina', 'papai noel'],
+    nome: 'Decoração natalina',
+    gancho: '🎄 Já pensando na decoração de Natal?',
+    contexto: 'Uma opção para quem gosta de decoração natalina.',
+    tags: '#DecoracaoDeNatal #Natal #AchadinhosDeNatal'
+  }
+];
 
-Procurando algo assim? Vale a pena conhecer essa opção e conferir os detalhes no anúncio.
+const categoria = categorias.find(c =>
+  c.termos.some(t => textoProduto.includes(t))
+) || {
+  nome: 'Achadinho da Shopee',
+  gancho: '✨ Olha esse achadinho que encontrei!',
+  contexto: 'Uma opção interessante para conhecer.',
+  tags: '#Achadinhos #DicasDeCompras #ShopeeBrasil'
+};
 
-👉 Confira o link de afiliada na bio ou nos Stories.
+// Usa o primeiro trecho significativo do título,
+// sem cortar palavras no meio.
+const nomePrincipal = nomeProduto
+  .split(/\s+(?:para|com|kit de|modelo)\s+/i)[0]
+  .trim();
 
-#AchadinhosShopee #Achadinhos #Publicidade`;
+const tituloLimpo = nomePrincipal.length >= 8 &&
+  nomePrincipal.length <= 85
+    ? nomePrincipal
+    : categoria.nome;
 
-const legendaUGC = `Gente, olha esse achadinho que encontrei! 😍
+// Identifica apenas características declaradas no anúncio.
+const caracteristicas = [
+  ['fundo removivel', 'fundo removível'],
+  ['duplo', 'modelo duplo'],
+  ['inox', 'aço inox'],
+  ['ceramica', 'cerâmica'],
+  ['algodao', 'algodão'],
+  ['vidro', 'vidro'],
+  ['madeira', 'madeira'],
+  ['veludo', 'veludo'],
+  ['canelado', 'acabamento canelado']
+]
+.filter(([termo]) => textoProduto.includes(termo))
+.map(([, descricao]) => descricao)
+.slice(0, 3);
 
-🛍️ ${nomeCurto}
+const detalhes = caracteristicas.length
+  ? 'O anúncio menciona: ' +
+    caracteristicas.join(', ') + '.'
+  : 'Confira os detalhes e as opções disponíveis no anúncio.';
 
-Achei uma opção interessante para mostrar por aqui! Confira as fotos, medidas e informações do anúncio para ver se combina com o que você procura.
+const legendaComercial = `${categoria.gancho}
 
-💬 O que acharam?
+🛍️ ${tituloLimpo}
 
-#Achadinhos #DicasDeCompras #Publicidade`;
+${categoria.contexto}
 
-const legendaSEO = `🔎 ${nomeCurto}
+✨ ${detalhes}
 
-Está procurando esse tipo de produto? Conheça essa opção disponível na Shopee.
+👉 Quer conhecer? Confira pelo link na bio ou nos Stories.
 
-🛍️ Veja as características, materiais e variações diretamente no anúncio.
+${categoria.tags} #AchadinhosShopee
+Publicidade | Link de afiliada`;
 
-👉 Link de afiliada na bio ou nos Stories.
+const legendaUGC = `Gente, olha o que encontrei na Shopee! 😍
 
-${tagsProduto}
-#AchadinhosShopee #ComprasOnline #Publicidade`;
+${tituloLimpo}
+
+${categoria.contexto}
+
+${detalhes}
+
+💬 Vocês gostam desse tipo de achadinho?
+
+Confira os detalhes no link da bio ou nos Stories.
+
+${categoria.tags} #Achadinhos
+Publicidade | Link de afiliada`;
+
+const legendaSEO = `🔎 ${tituloLimpo} | Achadinhos Shopee
+
+${categoria.contexto}
+
+🛍️ ${detalhes}
+
+Confira características, medidas e variações no anúncio.
+
+👉 Link na bio ou nos Stories.
+
+${categoria.tags} #AchadinhosShopee #ComprasOnline
+Publicidade | Link de afiliada`;
+
 
 const promptImagem = `Create an ultra-realistic UGC/POV product lifestyle photo,
 as if taken with an iPhone 15.
