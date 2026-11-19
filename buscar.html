@@ -383,6 +383,47 @@ ${linkProduto || '[Insira seu link de afiliada]'}
 #AchadinhosShopee #ShopeeBrasil #Achadinhos #DicasDeCompras
 #Publicidade #LinkDeAfiliado`;
 
+const nomeCurto = nomeProduto.slice(0, 110);
+
+const tagsProduto = [...new Set(
+  nomeProduto.toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .split(/[^a-z0-9]+/)
+    .filter(p => p.length >= 4 && p.length <= 20)
+)].slice(0, 4).map(p => '#' + p).join(' ');
+
+const legendaComercial = `🛍️ ACHADINHO DA SHOPEE!
+
+✨ ${nomeCurto}
+
+Procurando algo assim? Vale a pena conhecer essa opção e conferir os detalhes no anúncio.
+
+👉 Confira o link de afiliada na bio ou nos Stories.
+
+#AchadinhosShopee #Achadinhos #Publicidade`;
+
+const legendaUGC = `Gente, olha esse achadinho que encontrei! 😍
+
+🛍️ ${nomeCurto}
+
+Achei uma opção interessante para mostrar por aqui! Confira as fotos, medidas e informações do anúncio para ver se combina com o que você procura.
+
+💬 O que acharam?
+
+#Achadinhos #DicasDeCompras #Publicidade`;
+
+const legendaSEO = `🔎 ${nomeCurto}
+
+Está procurando esse tipo de produto? Conheça essa opção disponível na Shopee.
+
+🛍️ Veja as características, materiais e variações diretamente no anúncio.
+
+👉 Link de afiliada na bio ou nos Stories.
+
+${tagsProduto}
+#AchadinhosShopee #ComprasOnline #Publicidade`;
+
 const promptImagem = `Create an ultra-realistic UGC/POV product lifestyle photo,
 as if taken with an iPhone 15.
 
@@ -423,7 +464,11 @@ e vou deixar o link pra você conferir todos os detalhes."
 No exaggerated claims, no invented features, no fake testimonials.`;
 
 [
-  ['📝 Copiar legenda', legenda, 'Legenda'],
+  
+['🛍️ Legenda comercial', legendaComercial, 'Legenda comercial'],
+['📱 Legenda UGC', legendaUGC, 'Legenda UGC'],
+['🔎 Legenda SEO', legendaSEO, 'Legenda SEO'],
+
   ['📸 Prompt imagem UGC', promptImagem, 'Prompt de imagem'],
   ['🎬 Prompt vídeo Flow', promptVideo, 'Prompt de vídeo']
 ].forEach(([titulo, texto, tipo]) => {
