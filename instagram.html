@@ -44,6 +44,12 @@
     placeholder="Digite sua PAINEL_CHAVE"
   >
 
+<button type="button" id="consultarD1">
+  ☁️ Ver agendamentos do servidor
+</button>
+
+<div id="listaD1" class="muted" aria-live="polite"></div>
+
   <p id="instagramStatus" role="status" class="muted">
     Escolha uma publicação com foto na lista abaixo.
   </p>
@@ -359,6 +365,74 @@ async function salvarNoServidor(post) {
     status.textContent = '❌ ' + erro.message;
   }
 }
+
+$('consultarD1').onclick = async () => {
+  const key = $('instagramKey').value.trim();
+  const lista = $('listaD1');
+  const botao = $('consultarD1');
+
+  if (!key) {
+    alert('Digite sua PAINEL_CHAVE primeiro.');
+    return;
+  }
+
+  botao.disabled = true;
+  lista.textContent = 'Consultando o banco D1...';
+
+  try {
+    const resposta = await fetch(
+      'https://shopee-autovendas-api.gabrielalemosdahora.workers.dev/agenda-list',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Painel-Chave': key
+        },
+        body: JSON.stringify({})
+      }
+    );
+
+    const dados = await resposta.json();
+
+    if (!resposta.ok || !dados.sucesso) {
+      throw new Error(
+        dados.erro || 'Falha ao consultar agendamentos.'
+      );
+    }
+
+    lista.replaceChildren();
+
+    const titulo = document.createElement('p');
+    titulo.textContent =
+      '☁️ Registros retornados: ' + dados.total;
+    lista.appendChild(titulo);
+
+    for (const p of dados.agendamentos || []) {
+      const item = document.createElement('div');
+      item.className = 'entry';
+
+      const nome = document.createElement('strong');
+      nome.textContent = p.nome_produto;
+
+      const detalhes = document.createElement('p');
+      detalhes.textContent =
+        p.data_programada.split('-').reverse().join('/') +
+        ' às ' + p.hora_programada +
+        ' | ' + p.status +
+        (p.publicacao_automatica
+          ? ' | Automática habilitada'
+          : ' | Automática desativada');
+
+      item.append(nome, detalhes);
+      lista.appendChild(item);
+    }
+
+  } catch (erro) {
+    lista.textContent = '❌ ' + erro.message;
+  } finally {
+    botao.disabled = false;
+  }
+};
 
 function render(){const root=$('posts');root.replaceChildren();let ordered=[...posts].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));if(!ordered.length)root.textContent='Nenhuma publicação planejada.';
  ordered.forEach(p=>{const box=document.createElement('div');box.className='entry';const heading=document.createElement('h3');heading.textContent=p.name;box.appendChild(heading);const meta=document.createElement('p');meta.textContent=p.date.split('-').reverse().join('/')+' às '+p.time+' · '+p.kind+(p.posted?' · ✅ Publicado':' · ⏳ Planejado');box.appendChild(meta);
