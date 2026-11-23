@@ -294,6 +294,72 @@ async function consultarStatusInstagram(post) {
   }
 }
 
+async function salvarNoServidor(post) {
+  const key = $('instagramKey').value.trim();
+
+  if (!key) {
+    alert('Digite sua PAINEL_CHAVE na seção Integração com Instagram.');
+    return;
+  }
+
+  if (post.dbId) {
+    alert('Esta publicação já foi enviada ao servidor.');
+    return;
+  }
+
+  const status = $('instagramStatus');
+  status.textContent = 'Salvando publicação no D1...';
+
+  try {
+    const resposta = await fetch(
+      'https://shopee-autovendas-api.gabrielalemosdahora.workers.dev/agenda-save',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Painel-Chave': key
+        },
+        body: JSON.stringify({
+          productId: post.productId || '',
+          name: post.name,
+          caption: post.caption,
+          image: post.image || '',
+          affiliate: post.affiliate || '',
+          kind: post.kind,
+          date: post.date,
+          time: post.time
+        })
+      }
+    );
+
+    const dados = await resposta.json();
+
+    if (!resposta.ok || !dados.salvo || !dados.id) {
+      throw new Error(
+        dados.erro || 'Não foi possível salvar no servidor.'
+      );
+    }
+
+    post.dbId = dados.id;
+
+    try {
+      save();
+    } catch {
+      status.textContent =
+        '⚠️ Salvo no D1, mas não foi possível registrar a confirmação neste navegador.';
+      return;
+    }
+
+    render();
+
+    status.textContent =
+      '✅ Publicação salva no D1 como rascunho. Não publicada.';
+
+  } catch (erro) {
+    status.textContent = '❌ ' + erro.message;
+  }
+}
+
 function render(){const root=$('posts');root.replaceChildren();let ordered=[...posts].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));if(!ordered.length)root.textContent='Nenhuma publicação planejada.';
  ordered.forEach(p=>{const box=document.createElement('div');box.className='entry';const heading=document.createElement('h3');heading.textContent=p.name;box.appendChild(heading);const meta=document.createElement('p');meta.textContent=p.date.split('-').reverse().join('/')+' às '+p.time+' · '+p.kind+(p.posted?' · ✅ Publicado':' · ⏳ Planejado');box.appendChild(meta);
  if(p.image&&validHttps(p.image)){const im=document.createElement('img');im.src=p.image;im.alt=p.name;im.loading='lazy';im.onerror=()=>im.remove();box.appendChild(im)}
@@ -313,6 +379,19 @@ if (p.kind === 'Foto' && p.image && validHttps(p.image)) {
     () => consultarStatusInstagram(p),
     true
   );
+  
+if (!p.dbId) {
+  addButton(
+    '☁️ Salvar no servidor',
+    () => salvarNoServidor(p)
+  );
+} else {
+  const aviso = document.createElement('p');
+  aviso.textContent = '☁️ Salvo no D1';
+  aviso.className = 'muted';
+  box.appendChild(aviso);
+}
+
 } addButton('📸 Abrir Instagram',()=>window.open('https://www.instagram.com/','_blank','noopener'));addButton(p.posted?'Desmarcar publicado':'Marcar publicado',()=>{p.posted=!p.posted;save();render()},true);addButton('Excluir',()=>{if(confirm('Excluir este planejamento?')){posts=posts.filter(x=>x.id!==p.id);save();render()}},true);root.appendChild(box)
  });calendar()}
 $('postForm').onsubmit=e=>{e.preventDefault();const name=$('name').value.trim(),caption=$('caption').value.trim(),affiliate=$('affiliate').value.trim(),image=$('image').value.trim(),date=$('date').value,time=$('time').value;if(!name||!caption||!date||!time){alert('Preencha nome, legenda, data e horário.');return}if((affiliate&&!validHttps(affiliate))||(image&&!validHttps(image))){alert('Use links HTTPS válidos.');return}posts.push({id:crypto.randomUUID(),name,caption,affiliate,image,video:$('video').value.trim(),kind:$('kind').value,date,time,posted:false});try{save()}catch{alert('Não foi possível salvar. Verifique o armazenamento do navegador.');return}render();$('postForm').reset();alert('Publicação salva na Agenda Instagram! (Não foi publicada)')};
