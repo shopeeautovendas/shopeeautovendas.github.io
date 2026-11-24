@@ -506,6 +506,123 @@ if (
   }
 };
 
+async function editarPublicacao(p) {
+  if (p.posted) {
+    alert('Não é possível editar uma publicação marcada como publicada.');
+    return;
+  }
+
+  const nome = prompt('Nome do produto:', p.name);
+  if (nome === null) return;
+
+  const legenda = prompt('Legenda:', p.caption);
+  if (legenda === null) return;
+
+  const imagem = prompt('Link HTTPS da imagem:', p.image || '');
+  if (imagem === null) return;
+
+  const link = prompt('Link de afiliada:', p.affiliate || '');
+  if (link === null) return;
+
+  const data = prompt('Data (AAAA-MM-DD):', p.date);
+  if (data === null) return;
+
+  const hora = prompt('Horário (HH:MM):', p.time);
+  if (hora === null) return;
+
+  const novo = {
+    name: nome.trim(),
+    caption: legenda.trim(),
+    image: imagem.trim(),
+    affiliate: link.trim(),
+    kind: p.kind,
+    date: data.trim(),
+    time: hora.trim()
+  };
+
+  if (
+    !novo.name || novo.name.length > 150 ||
+    !novo.caption || novo.caption.length > 2200 ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(novo.date) ||
+    !/^([01]\d|2[0-3]):[0-5]\d$/.test(novo.time) ||
+    (novo.image && !validHttps(novo.image)) ||
+    (novo.affiliate && !validHttps(novo.affiliate))
+  ) {
+    alert('Confira nome, legenda, links, data e horário.');
+    return;
+  }
+
+  const status = $('instagramStatus');
+
+  // Se já está no D1, atualiza o servidor primeiro.
+  if (p.dbId) {
+    const key = $('instagramKey').value.trim();
+
+    if (!key) {
+      alert('Digite sua PAINEL_CHAVE antes de editar.');
+      return;
+    }
+
+    status.textContent = 'Atualizando agendamento no D1...';
+
+    try {
+      const resposta = await fetch(
+        'https://shopee-autovendas-api.gabrielalemosdahora.workers.dev/agenda-update',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Painel-Chave': key
+          },
+          body: JSON.stringify({
+            id: p.dbId,
+            ...novo
+          })
+        }
+      );
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok || !dados.atualizado) {
+        throw new Error(
+          dados.erro || 'Atualização não confirmada.'
+        );
+      }
+
+    } catch (erro) {
+      status.textContent = '❌ ' + erro.message;
+      alert('A edição não foi aplicada: ' + erro.message);
+      return;
+    }
+  }
+
+  const anterior = { ...p };
+
+  Object.assign(p, novo);
+
+  // Uma preparação antiga não representa a nova
+  // imagem ou legenda editada.
+  if (
+    anterior.image !== novo.image ||
+    anterior.caption !== novo.caption
+  ) {
+    delete p.containerId;
+    delete p.statusMeta;
+    delete p.legendaPreparada;
+  }
+
+  try {
+    save();
+    render();
+    status.textContent = p.dbId
+      ? '✅ Atualizado no D1 e na agenda local.'
+      : '✅ Atualizado na agenda local.';
+  } catch {
+    status.textContent =
+      '⚠️ O servidor pode ter sido atualizado, mas não foi possível salvar a cópia local.';
+  }
+}
+
 function render(){const root=$('posts');root.replaceChildren();let ordered=[...posts].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));if(!ordered.length)root.textContent='Nenhuma publicação planejada.';
  ordered.forEach(p=>{const box=document.createElement('div');box.className='entry';const heading=document.createElement('h3');heading.textContent=p.name;box.appendChild(heading);const meta=document.createElement('p');meta.textContent=p.date.split('-').reverse().join('/')+' às '+p.time+' · '+p.kind+(p.posted?' · ✅ Publicado':' · ⏳ Planejado');box.appendChild(meta);
  if(p.image&&validHttps(p.image)){const im=document.createElement('img');im.src=p.image;im.alt=p.name;im.loading='lazy';im.onerror=()=>im.remove();box.appendChild(im)}
@@ -538,6 +655,14 @@ if (!p.dbId) {
   aviso.textContent = '☁️ Salvo no D1';
   aviso.className = 'muted';
   box.appendChild(aviso);
+}
+
+if (!p.posted) {
+  addButton(
+    '✏️ Editar publicação',
+    () => editarPublicacao(p),
+    true
+  );
 }
 
  addButton('📸 Abrir Instagram',()=>window.open('https://www.instagram.com/','_blank','noopener'));addButton(p.posted?'Desmarcar publicado':'Marcar publicado',()=>{p.posted=!p.posted;save();render()},true);addButton('Excluir',()=>{if(confirm('Excluir este planejamento?')){posts=posts.filter(x=>x.id!==p.id);save();render()}},true);root.appendChild(box)
