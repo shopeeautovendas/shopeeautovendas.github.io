@@ -519,13 +519,15 @@ if (p.kind === 'Foto' && p.image && validHttps(p.image)) {
   );
 }
                     
- addButton('📋 Copiar legenda',()=>copy(p.caption));if(p.affiliate)addButton('🔗 Copiar link',()=>copy(p.affiliate));if (p.containerId) {
+ addButton('📋 Copiar legenda',()=>copy(p.caption));if(p.affiliate)addButton('🔗 Copiar link',()=>copy(p.affiliate));
+if (p.containerId) {
   addButton(
     '🔎 Consultar status na Meta',
     () => consultarStatusInstagram(p),
     true
   );
-  
+}
+
 if (!p.dbId) {
   addButton(
     '☁️ Salvar no servidor',
@@ -538,7 +540,7 @@ if (!p.dbId) {
   box.appendChild(aviso);
 }
 
-} addButton('📸 Abrir Instagram',()=>window.open('https://www.instagram.com/','_blank','noopener'));addButton(p.posted?'Desmarcar publicado':'Marcar publicado',()=>{p.posted=!p.posted;save();render()},true);addButton('Excluir',()=>{if(confirm('Excluir este planejamento?')){posts=posts.filter(x=>x.id!==p.id);save();render()}},true);root.appendChild(box)
+ addButton('📸 Abrir Instagram',()=>window.open('https://www.instagram.com/','_blank','noopener'));addButton(p.posted?'Desmarcar publicado':'Marcar publicado',()=>{p.posted=!p.posted;save();render()},true);addButton('Excluir',()=>{if(confirm('Excluir este planejamento?')){posts=posts.filter(x=>x.id!==p.id);save();render()}},true);root.appendChild(box)
  });calendar()}
 $('postForm').onsubmit=e=>{e.preventDefault();const name=$('name').value.trim(),caption=$('caption').value.trim(),affiliate=$('affiliate').value.trim(),image=$('image').value.trim(),date=$('date').value,time=$('time').value;if(!name||!caption||!date||!time){alert('Preencha nome, legenda, data e horário.');return}if((affiliate&&!validHttps(affiliate))||(image&&!validHttps(image))){alert('Use links HTTPS válidos.');return}posts.push({id:crypto.randomUUID(),name,caption,affiliate,image,video:$('video').value.trim(),kind:$('kind').value,date,time,posted:false});try{save()}catch{alert('Não foi possível salvar. Verifique o armazenamento do navegador.');return}render();$('postForm').reset();alert('Publicação salva na Agenda Instagram! (Não foi publicada)')};
 $('backup').onclick=()=>{const blob=new Blob([JSON.stringify(posts,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='backup-agenda-instagram.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)};
