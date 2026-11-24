@@ -424,6 +424,78 @@ $('consultarD1').onclick = async () => {
           : ' | Automática desativada');
 
       item.append(nome, detalhes);
+     
+if (
+  p.status === 'rascunho' &&
+  Number(p.publicacao_automatica) === 0
+) {
+  const excluir = document.createElement('button');
+  excluir.type = 'button';
+  excluir.className = 'secondary';
+  excluir.textContent = '🗑️ Excluir do D1';
+
+  excluir.onclick = async () => {
+    const confirmar = confirm(
+      'Excluir este registro do servidor?\n\n' +
+      p.nome_produto + '\n' +
+      p.data_programada + ' às ' +
+      p.hora_programada +
+      '\n\nEssa ação não pode ser desfeita no D1.'
+    );
+
+    if (!confirmar) return;
+
+    excluir.disabled = true;
+    excluir.textContent = 'Excluindo...';
+
+    try {
+      const resposta = await fetch(
+        'https://shopee-autovendas-api.gabrielalemosdahora.workers.dev/agenda-delete',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Painel-Chave': key
+          },
+          body: JSON.stringify({ id: p.id })
+        }
+      );
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok || !dados.excluido) {
+        throw new Error(
+          dados.erro || 'Não foi possível excluir.'
+        );
+      }
+
+      // Atualiza o vínculo local, se existir.
+      const local = posts.find(x => x.dbId === p.id);
+
+      if (local) {
+        delete local.dbId;
+        save();
+        render();
+      }
+
+      item.remove();
+
+      $('instagramStatus').textContent =
+        '✅ Registro excluído do D1. ' +
+        'A agenda local foi preservada.';
+
+      alert('Registro excluído do servidor!');
+
+    } catch (erro) {
+      alert('Erro: ' + erro.message);
+      excluir.disabled = false;
+      excluir.textContent = '🗑️ Excluir do D1';
+    }
+  };
+
+  item.appendChild(excluir);
+}
+
       lista.appendChild(item);
     }
 
