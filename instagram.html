@@ -425,6 +425,109 @@ $('consultarD1').onclick = async () => {
 
       item.append(nome, detalhes);
      
+const podeAutorizar =
+  p.status === 'rascunho' &&
+  Number(p.publicacao_automatica) === 0 &&
+  p.tipo === 'Foto' &&
+  validHttps(p.imagem_url || '');
+
+const podeCancelar =
+  p.status === 'agendado' &&
+  Number(p.publicacao_automatica) === 1;
+
+if (podeAutorizar || podeCancelar) {
+  const acao = document.createElement('button');
+
+  acao.type = 'button';
+
+  acao.textContent = podeAutorizar
+    ? '▶ Autorizar publicação (TESTE)'
+    : '🛑 Cancelar agendamento';
+
+  acao.style.background = podeAutorizar
+    ? '#16803d'
+    : '#b91c1c';
+
+  acao.onclick = async () => {
+    const chave = $('instagramKey').value.trim();
+
+    if (!chave) {
+      alert('Digite sua PAINEL_CHAVE.');
+      return;
+    }
+
+    if (podeAutorizar) {
+      const horario = new Date(
+        p.data_programada + 'T' +
+        p.hora_programada + ':00-03:00'
+      );
+
+      if (
+        !Number.isFinite(horario.getTime()) ||
+        horario <= new Date()
+      ) {
+        alert('Escolha uma data e horário futuros.');
+        return;
+      }
+    }
+
+    const confirmar = confirm(
+      (podeAutorizar
+        ? 'Autorizar agendamento em modo de TESTE?'
+        : 'Cancelar agendamento automático?') +
+      '\n\n' + p.nome_produto +
+      '\n' + p.data_programada +
+      ' às ' + p.hora_programada +
+      '\n\nNenhuma foto será publicada neste teste.'
+    );
+
+    if (!confirmar) return;
+
+    acao.disabled = true;
+
+    const rota = podeAutorizar
+      ? '/agenda-authorize'
+      : '/agenda-cancel';
+
+    try {
+      const resposta = await fetch(
+        'https://shopee-autovendas-api.gabrielalemosdahora.workers.dev' +
+        rota,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Painel-Chave': chave
+          },
+          body: JSON.stringify({ id: p.id })
+        }
+      );
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok || !dados.sucesso) {
+        throw new Error(
+          dados.erro || 'Operação não confirmada.'
+        );
+      }
+
+      $('instagramStatus').textContent =
+        podeAutorizar
+          ? '✅ Autorizado em modo de TESTE.'
+          : '✅ Agendamento cancelado. Voltou a ser rascunho.';
+
+      await $('consultarD1').onclick();
+
+    } catch (erro) {
+      alert('Erro: ' + erro.message);
+    } finally {
+      acao.disabled = false;
+    }
+  };
+
+  item.appendChild(acao);
+}
+
 if (
   p.status === 'rascunho' &&
   Number(p.publicacao_automatica) === 0
