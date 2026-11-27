@@ -48,6 +48,51 @@
   ☁️ Ver agendamentos do servidor
 </button>
 
+<div id="painelD1" style="margin:20px 0">
+
+  <h2>📊 Central de publicações</h2>
+
+  <div class="grid">
+
+    <div class="entry" style="background:#ecfdf5">
+      <strong>✅ Publicadas</strong>
+      <h1 id="totalPublicadas" style="color:#15803d">—</h1>
+    </div>
+
+    <div class="entry" style="background:#f5f3ff">
+      <strong>📅 Agendadas</strong>
+      <h1 id="totalAgendadas" style="color:#7c3aed">—</h1>
+    </div>
+
+    <div class="entry" style="background:#f1f5f9">
+      <strong>📝 Rascunhos</strong>
+      <h1 id="totalRascunhos" style="color:#475569">—</h1>
+    </div>
+
+    <div class="entry" style="background:#fef2f2">
+      <strong>⚠️ Em revisão</strong>
+      <h1 id="totalRevisao" style="color:#dc2626">—</h1>
+    </div>
+
+    <div class="entry" style="background:#fff7ed">
+      <strong>⏳ Em processamento</strong>
+      <h1 id="totalProcessando" style="color:#c2410c">—</h1>
+    </div>
+
+  </div>
+
+  <p id="ultimaAtualizacaoD1" class="muted">
+    Aguardando consulta ao servidor.
+  </p>
+
+  <h2>📜 Últimas publicações</h2>
+
+  <div id="historicoD1" class="muted">
+    Aguardando consulta ao servidor.
+  </div>
+
+</div>
+
 <div id="listaD1" class="muted" aria-live="polite"></div>
 
   <p id="instagramStatus" role="status" class="muted">
@@ -366,8 +411,93 @@ async function salvarNoServidor(post) {
   }
 }
 
+function formatarDataPublicacao(valor) {
+  if (!valor) return 'Horário não registrado';
+
+  const texto = String(valor);
+
+  const iso = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(texto)
+    ? texto.replace(' ', 'T') + 'Z'
+    : texto;
+
+  const data = new Date(iso);
+
+  if (!Number.isFinite(data.getTime())) {
+    return 'Horário indisponível';
+  }
+
+  return data.toLocaleString('pt-BR', {
+    timeZone: 'America/Sao_Paulo'
+  });
+}
+
+function atualizarPainelD1(registros) {
+  if (!Array.isArray(registros)) return;
+
+  const contar = status =>
+    registros.filter(p => p.status === status).length;
+
+  $('totalPublicadas').textContent = contar('publicado');
+  $('totalAgendadas').textContent = contar('agendado');
+  $('totalRascunhos').textContent = contar('rascunho');
+  $('totalRevisao').textContent = contar('revisao');
+
+  $('totalProcessando').textContent =
+    contar('processando') +
+    contar('preparado') +
+    contar('publicando');
+
+  $('ultimaAtualizacaoD1').textContent =
+    'Atualizado em: ' +
+    new Date().toLocaleString('pt-BR', {
+      timeZone: 'America/Sao_Paulo'
+    }) +
+    ' | Registros consultados: ' + registros.length;
+
+  const historico = $('historicoD1');
+  historico.replaceChildren();
+
+  const publicados = registros
+    .filter(p => p.status === 'publicado')
+    .sort((a, b) =>
+      String(b.publicado_em || '').localeCompare(
+        String(a.publicado_em || '')
+      )
+    )
+    .slice(0, 5);
+
+  if (!publicados.length) {
+    historico.textContent =
+      'Nenhuma publicação concluída nos registros consultados.';
+    return;
+  }
+
+  publicados.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'entry';
+
+    const nome = document.createElement('strong');
+    nome.textContent = '✅ ' + p.nome_produto;
+
+    const horario = document.createElement('p');
+    horario.textContent =
+      'Publicado em: ' +
+      formatarDataPublicacao(p.publicado_em);
+
+    const tentativas = document.createElement('p');
+    tentativas.textContent =
+      'Tentativas: ' + (p.tentativas ?? 'Não informado');
+
+    item.append(nome, horario, tentativas);
+    historico.appendChild(item);
+  });
+}
+
+
 function sincronizarPublicadosD1(registros) {
   if (!Array.isArray(registros)) return;
+
+  atualizarPainelD1(registros);
 
   const publicados = new Set(
     registros
@@ -502,6 +632,56 @@ lista.replaceChildren();
 
       item.append(nome, detalhes);
      
+const informacoes = document.createElement('p');
+
+informacoes.textContent =
+  'Tentativas: ' + (p.tentativas ?? 'Não informado');
+
+item.appendChild(informacoes);
+
+if (p.status === 'agendado') {
+  const modo = document.createElement('p');
+
+  modo.textContent =
+    Number(p.autorizacao_real) === 1
+      ? '🚀 Publicação REAL autorizada'
+      : '🧪 Modo de teste';
+
+  item.appendChild(modo);
+}
+
+if (p.publicado_em) {
+  const publicado = document.createElement('p');
+
+  publicado.textContent =
+    '✅ Publicado em: ' +
+    formatarDataPublicacao(p.publicado_em);
+
+  publicado.style.color = '#15803d';
+
+  item.appendChild(publicado);
+}
+
+if (p.media_id) {
+  const midia = document.createElement('p');
+
+  midia.textContent =
+    'ID da publicação: ' + p.media_id;
+
+  item.appendChild(midia);
+}
+
+if (p.ultimo_erro) {
+  const erro = document.createElement('p');
+
+  erro.textContent =
+    '⚠️ Motivo da falha: ' + p.ultimo_erro;
+
+  erro.style.color = '#dc2626';
+
+  item.appendChild(erro);
+}
+
 const podeAutorizar =
   p.status === 'rascunho' &&
   Number(p.publicacao_automatica) === 0 &&
