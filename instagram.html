@@ -431,6 +431,87 @@ const podeAutorizar =
   p.tipo === 'Foto' &&
   validHttps(p.imagem_url || '');
 
+if (podeAutorizar) {
+  const real = document.createElement('button');
+
+  real.type = 'button';
+  real.textContent = '🚀 Autorizar publicação REAL';
+  real.style.background = '#7c3aed';
+
+  real.onclick = async () => {
+    const chave = $('instagramKey').value.trim();
+
+    if (!chave) {
+      alert('Digite sua PAINEL_CHAVE.');
+      return;
+    }
+
+    const horario = new Date(
+      p.data_programada + 'T' +
+      p.hora_programada + ':00-03:00'
+    );
+
+    if (
+      !Number.isFinite(horario.getTime()) ||
+      horario <= new Date()
+    ) {
+      alert('Escolha uma data e horário futuros.');
+      return;
+    }
+
+    const confirmar = confirm(
+      'ATENÇÃO: PUBLICAÇÃO REAL NO INSTAGRAM\n\n' +
+      'Conta: @ornatocasa_\n' +
+      'Produto: ' + p.nome_produto + '\n' +
+      'Data: ' + p.data_programada + '\n' +
+      'Horário de Brasília: ' + p.hora_programada +
+      '\n\nLegenda:\n' + p.legenda +
+      '\n\nAutoriza a publicação automática desta foto?'
+    );
+
+    if (!confirmar) return;
+
+    real.disabled = true;
+
+    try {
+      const resposta = await fetch(
+        'https://shopee-autovendas-api.gabrielalemosdahora.workers.dev/agenda-authorize-real',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Painel-Chave': chave
+          },
+          body: JSON.stringify({
+            id: p.id,
+            confirmacao: 'AUTORIZAR_PUBLICACAO_REAL'
+          })
+        }
+      );
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok || !dados.sucesso) {
+        throw new Error(
+          dados.erro || 'Autorização não confirmada.'
+        );
+      }
+
+      $('instagramStatus').textContent =
+        '✅ Publicação REAL autorizada.';
+
+      await $('consultarD1').onclick();
+
+    } catch (erro) {
+      alert(erro.message);
+    } finally {
+      real.disabled = false;
+    }
+  };
+
+  item.appendChild(real);
+}
+
 const podeCancelar =
   p.status === 'agendado' &&
   Number(p.publicacao_automatica) === 1;
