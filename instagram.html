@@ -14,7 +14,36 @@
 <label for="product">Produto salvo no painel</label><select id="product"><option value="">Escolha um produto ou preencha manualmente</option></select>
 <label for="name">Nome do produto</label><input id="name" required maxlength="150" placeholder="Ex.: Porta-frios duplo">
 <label for="kind">Tipo de publicação</label><select id="kind"><option value="Foto">Foto</option><option value="Reel">Reel (vídeo do Google Flow)</option><option value="Carrossel">Carrossel</option></select>
-<label for="style">Estilo da legenda</label><select id="style"><option value="Comercial">🛍️ Comercial</option><option value="UGC">📱 UGC natural</option><option value="SEO">🔎 Otimizada para buscas</option></select>
+
+<label for="tituloSEO">Título SEO personalizado (opcional)</label>
+<input id="tituloSEO" maxlength="120"
+placeholder="Ex.: Kit dispenser para sabão e amaciante">
+
+<label for="caracteristicas">
+Características e especificações do produto
+</label>
+
+<textarea id="caracteristicas"
+maxlength="500"
+style="min-height:100px"
+placeholder="Cole aqui as principais características da descrição do produto.">
+</textarea>
+
+<label for="destinoCTA">Chamada para compra</label>
+
+<select id="destinoCTA">
+  <option value="salvar">
+    Incentivar a salvar o achadinho
+  </option>
+  <option value="bio">
+    Link na bio
+  </option>
+  <option value="stories">
+    Link nos Stories
+  </option>
+</select>
+
+ <label for="style">Estilo da legenda</label><select id="style"><option value="Comercial">🛍️ Comercial</option><option value="UGC">📱 UGC natural</option><option value="SEO" selected>🔎 Instagram SEO | Ornato Casa</option></select>
 <button type="button" id="makeCaption">✍️ Gerar legenda gratuita</button>
 <label for="caption">Legenda editável</label><textarea id="caption" required maxlength="2200" placeholder="Gere ou escreva sua legenda"></textarea>
 <label for="affiliate">Link de afiliada (referência para bio ou Stories)</label><input id="affiliate" type="url" placeholder="https://s.shopee.com.br/...">
@@ -111,29 +140,188 @@ const read=(key)=>{try{const a=JSON.parse(localStorage.getItem(key)||'[]');retur
 let posts=read(KEY),products=read(PRODUCT_KEY);
 const save=()=>localStorage.setItem(KEY,JSON.stringify(posts));
 const validHttps=s=>{try{return new URL(s).protocol==='https:'}catch{return false}};
-const clean=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-const tags=(n)=>{
- const t=clean(n);
- if(/porta.?frios|presunto|queijo/.test(t))return '#PortaFrios #OrganizacaoDeGeladeira #CozinhaOrganizada';
- if(/organizador|organizadora/.test(t))return '#OrganizacaoDaCasa #CasaOrganizada #Organizadores';
- if(/almofada/.test(t))return '#AlmofadaDecorativa #DecoracaoDeSala #Decoracao';
- if(/vestido|blusa|camisa|calca|saia/.test(t))return '#ModaFeminina #LooksFemininos #AchadinhosDeModa';
- if(/natal|natalina/.test(t))return '#DecoracaoDeNatal #AchadinhosDeNatal #Natal';
- if(/luminaria|abajur|lampada/.test(t))return '#IluminacaoDecorativa #DecoracaoDeCasa';
- return '#AchadinhosShopee #DicasDeCompras #ComprasOnline';
-};
-const shortName=name=>{const n=name.split(/\s+(?:para|com|modelo)\s+/i)[0].trim();return n.length>=8&&n.length<=85?n:name.slice(0,85).replace(/\s+\S*$/,'');};
-function makeCaption(){
- const name=$('name').value.trim();if(!name){alert('Escolha ou digite o produto primeiro.');return}
- const short=shortName(name),t=tags(name),style=$('style').value;
- const copy={
- Comercial:`✨ Olha esse achadinho da Shopee!\n\n🛍️ ${short}\n\nUma opção para conhecer e conferir os detalhes do anúncio.\n\n👉 Confira o link de afiliada na bio ou nos Stories.\n\n${t} #AchadinhosShopee\nPublicidade | Link de afiliada`,
- UGC:`Gente, olha esse achadinho que encontrei! 😍\n\n🛍️ ${short}\n\nEstou compartilhando essa opção para vocês conferirem as características e variações do anúncio.\n\n💬 O que acharam?\n\n${t} #Achadinhos\nPublicidade | Link de afiliada`,
- SEO:`🔎 ${short} | Achadinhos Shopee\n\nProcurando algo assim? Veja detalhes, medidas e variações disponíveis no anúncio.\n\n👉 Link de afiliada na bio ou nos Stories.\n\n${t} #AchadinhosShopee\nPublicidade | Link de afiliada`
- };
- $('caption').value=copy[style]||copy.Comercial;
+
+const clean = s => String(s || '')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase();
+
+const bibliotecaLegendas = [
+
+  {
+    regra: /porta.?frios|presunto|queijo/,
+    seo: 'Organização de geladeira',
+    emoji: '🧀',
+    gancho: 'Pequenos detalhes que fazem toda a diferença na organização da cozinha!',
+    comercial: 'Chega de embalagens espalhadas pela geladeira!',
+    ugc: 'Olha esse achadinho para organizar a geladeira!',
+    desejo: 'Mais organização e praticidade para a rotina da cozinha.',
+    tags: '#PortaFrios #GeladeiraOrganizada #OrganizacaoDeCozinha #UtilidadesDomesticas'
+  },
+
+  {
+    regra: /lavanderia|amaciante|sabao|dispenser/,
+    seo: 'Organização de lavanderia',
+    emoji: '🤍',
+    gancho: 'Sua lavanderia merece esse toque de organização e elegância!',
+    comercial: 'Transforme a organização da sua lavanderia!',
+    ugc: 'Olha esse achadinho para deixar a lavanderia mais bonita!',
+    desejo: 'Para quem ama uma casa funcional, organizada e cheia de personalidade.',
+    tags: '#LavanderiaOrganizada #OrganizacaoDeLavanderia #CasaOrganizada #UtilidadesDomesticas'
+  },
+
+  {
+    regra: /banheiro|saboneteira|porta.escova/,
+    seo: 'Organização de banheiro',
+    emoji: '✨',
+    gancho: 'Um banheiro organizado deixa a rotina muito mais agradável!',
+    comercial: 'Renove a organização do seu banheiro com pequenos detalhes!',
+    ugc: 'Olha esse achadinho para o banheiro!',
+    desejo: 'Inspiração para criar um ambiente mais harmonioso e acolhedor.',
+    tags: '#BanheiroOrganizado #DecoracaoDeBanheiro #Organizacao #CasaOrganizada'
+  },
+
+  {
+    regra: /natal|natalina|papai noel/,
+    seo: 'Decoração de Natal',
+    emoji: '🎄',
+    gancho: 'O encanto do Natal está nos pequenos detalhes!',
+    comercial: 'Deixe sua casa ainda mais especial neste Natal!',
+    ugc: 'Olha esse achadinho para a decoração de Natal!',
+    desejo: 'Para criar um clima natalino cheio de charme e aconchego.',
+    tags: '#DecoracaoDeNatal #Natal #AchadinhosDeNatal #CasaDecorada'
+  },
+
+  {
+    regra: /luminaria|abajur|lampada|iluminacao/,
+    seo: 'Iluminação e decoração',
+    emoji: '💡',
+    gancho: 'A iluminação certa faz toda a diferença na decoração!',
+    comercial: 'Dê um toque especial à decoração da sua casa!',
+    ugc: 'Olha esse achadinho de iluminação!',
+    desejo: 'Inspiração para ambientes cheios de personalidade e aconchego.',
+    tags: '#IluminacaoDecorativa #Luminaria #DecoracaoDeCasa #CasaAconchegante'
+  },
+
+  {
+    regra: /almofada|manta|tapete|vaso|mesa lateral|decoracao/,
+    seo: 'Decoração de casa',
+    emoji: '🤍',
+    gancho: 'Uma casa cheia de personalidade começa pelos detalhes!',
+    comercial: 'Renove a decoração da sua casa com esse achadinho!',
+    ugc: 'Olha esse detalhe lindo para decorar a casa!',
+    desejo: 'Para quem ama ambientes elegantes, acolhedores e cheios de charme.',
+    tags: '#DecoracaoDeCasa #Decoracao #CasaAconchegante #AchadinhosParaCasa'
+  },
+
+  {
+    regra: /cozinha|faqueiro|talher|panela|pote|travessa/,
+    seo: 'Utilidades para cozinha',
+    emoji: '🍽️',
+    gancho: 'Quem ama cuidar da casa sabe o valor dos pequenos detalhes!',
+    comercial: 'Um achadinho especial para a sua cozinha!',
+    ugc: 'Olha o que encontrei para a cozinha!',
+    desejo: 'Inspiração para uma cozinha funcional e cheia de personalidade.',
+    tags: '#UtilidadesDomesticas #Cozinha #AchadinhosParaCasa #OrganizacaoDeCozinha'
+  },
+
+  {
+    regra: /organizador|organizadora|cesto|prateleira/,
+    seo: 'Organização da casa',
+    emoji: '✨',
+    gancho: 'Uma casa organizada transforma a rotina!',
+    comercial: 'Quer dar um fim à bagunça?',
+    ugc: 'Quem mais ama achadinhos de organização?',
+    desejo: 'Para quem busca uma rotina mais organizada e ambientes harmoniosos.',
+    tags: '#OrganizacaoDaCasa #CasaOrganizada #Organizadores #UtilidadesDomesticas'
+  },
+
+  {
+    regra: /vestido|blusa|camisa|calca|saia|sandalia|bolsa/,
+    seo: 'Moda e estilo',
+    emoji: '🤍',
+    gancho: 'Estilo e personalidade em cada detalhe!',
+    comercial: 'Um achadinho para renovar seus looks!',
+    ugc: 'Olha esse achadinho de moda!',
+    desejo: 'Inspiração para criar novas combinações e valorizar seu estilo.',
+    tags: '#Moda #DicasDeModa #Looks #AchadinhosDeModa'
+  }
+
+];
+
+function makeCaption() {
+
+  const nome = $('name').value.trim();
+
+  if (!nome) {
+    alert('Escolha ou digite o produto primeiro.');
+    return;
+  }
+
+  const caracteristicas =
+    $('caracteristicas').value.trim();
+
+  const personalizado =
+    $('tituloSEO').value.trim();
+
+  const estilo = $('style').value;
+
+  const categoria = bibliotecaLegendas.find(c =>
+    c.regra.test(clean(nome))
+  ) || {
+    seo: 'Achadinhos para o dia a dia',
+    emoji: '✨',
+    gancho: 'Os pequenos detalhes tornam o dia a dia mais especial!',
+    comercial: 'Olha esse achadinho que merece sua atenção!',
+    ugc: 'Olha o que encontrei na Shopee!',
+    desejo: '',
+    tags: '#Achadinhos #DicasDeCompras #ComprasOnline'
+  };
+
+  const nomeCurto = nome.length > 95
+    ? nome.slice(0, 95).replace(/\s+\S*$/, '')
+    : nome;
+
+  const titulo =
+    (personalizado || nomeCurto) +
+    ' | ' + categoria.seo +
+    ' ' + categoria.emoji;
+
+  const gancho =
+    estilo === 'Comercial'
+      ? categoria.comercial
+      : estilo === 'UGC'
+        ? categoria.ugc
+        : categoria.gancho;
+
+  const detalhes = caracteristicas
+    ? '✨ ' + caracteristicas
+    : '';
+
+  const chamadas = {
+    bio: '🛒 Confira esse achadinho no link da bio.',
+    stories: '🛒 Confira os detalhes pelo link nos Stories.',
+    salvar: '🤍 Salve esse achadinho para lembrar na próxima compra.'
+  };
+
+  const cta =
+    chamadas[$('destinoCTA').value] ||
+    chamadas.salvar;
+
+  $('caption').value = [
+    titulo,
+    gancho,
+    detalhes,
+    categoria.desejo,
+    cta,
+    categoria.tags + ' #AchadinhosShopee',
+    'Publicidade | Link de afiliada'
+  ].filter(Boolean).join('\n\n');
+
 }
-$('makeCaption').onclick=makeCaption;
+
+$('makeCaption').onclick = makeCaption;
+
 
 const sel = $('product');
 
@@ -189,7 +377,11 @@ function mostrarFoto() {
 $('image').addEventListener('input', mostrarFoto);
 sel.addEventListener('change', mostrarFoto);
       
-sel.onchange=()=>{const p=products.find(x=>String(x.id)===sel.value);if(!p)return;$('name').value=p.name||'';$('affiliate').value=p.url||'';$('image').value=p.imageUrl||p.image||'';makeCaption();mostrarFoto()};
+sel.onchange=()=>{const p=products.find(x=>String(x.id)===sel.value);if(!p)return;$('name').value=p.name||'';$('affiliate').value=p.url||'';$('image').value=p.imageUrl||p.image||'';
+$('caracteristicas').value='';
+$('tituloSEO').value='';
+makeCaption();
+mostrarFoto()};
 let month=new Date();month=new Date(month.getFullYear(),month.getMonth(),1);
 function calendar(){const grid=$('calendar');grid.replaceChildren();$('dayDetail').textContent='';$('month').textContent=month.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
  for(const d of ['D','S','T','Q','Q','S','S']){const el=document.createElement('strong');el.textContent=d;grid.appendChild(el)}
